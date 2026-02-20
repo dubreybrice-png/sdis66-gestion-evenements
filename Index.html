@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1565c0;
+      --primary-dark: #0d47a1;
+      --primary-light: #e3f2fd;
+      --danger: #e53935;
+      --warning: #fb8c00;
+      --success: #43a047;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --text: #212121;
+      --text-light: #757575;
+      --border: #e0e0e0;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+      color: white;
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; position: relative; }
+    .header p { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; position: relative; }
+
+    /* ===== CONTAINER ===== */
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+
+    /* ===== LÉGENDE ===== */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      margin-bottom: 24px; padding: 14px 20px;
+      background: white; border-radius: var(--radius);
+      box-shadow: var(--shadow); align-items: center;
+    }
+    .legend-title { font-weight: 700; font-size: 0.85rem; color: var(--text); margin-right: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-light); }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ===== EVENTS GRID ===== */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px; margin-bottom: 24px;
+    }
+
+    /* ===== TYPE SECTION ===== */
+    .type-section { margin-bottom: 32px; }
+    .type-section-title {
+      font-size: 1.25rem; font-weight: 700; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 8px; border-bottom: 2px solid var(--border);
+    }
+    .type-section-title .count {
+      font-size: 0.85rem; color: var(--text-light); font-weight: 400;
+    }
+
+    /* ===== EVENT CARD ===== */
+    .event-card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+      border-left: 8px solid;
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .event-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+    .event-card.status-red { border-left-color: var(--danger); background: linear-gradient(to right, #ffebee 0%, white 15%); }
+    .event-card.status-orange { border-left-color: var(--warning); background: linear-gradient(to right, #fff3e0 0%, white 15%); }
+    .event-card.status-green { border-left-color: var(--success); background: linear-gradient(to right, #e8f5e9 0%, white 15%); }
+
+    .event-card .badge {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--primary); color: white;
+      border-radius: 50%; min-width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700;
+      box-shadow: 0 2px 6px rgba(21,101,192,0.4);
+    }
+    .event-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; padding-right: 32px; line-height: 1.2; }
+
+    .info-row {
+      display: flex; align-items: center; gap: 5px;
+      margin-bottom: 3px; font-size: 0.75rem; color: var(--text-light);
+    }
+    .info-row .icon { width: 16px; text-align: center; flex-shrink: 0; font-size: 0.8rem; }
+
+    .info-row.date-row {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .info-row.date-row .icon { font-size: 0.9rem; }
+
+    .comment-box {
+      margin-top: 6px; padding: 6px 8px;
+      background: #f8f9fa; border-radius: 6px;
+      font-size: 0.7rem; color: var(--text-light);
+      font-style: italic; border-left: 2px solid var(--border);
+    }
+
+    .status-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 16px;
+      font-size: 0.7rem; font-weight: 600;
+    }
+    .status-tag.red { background: #ffebee; color: var(--danger); }
+    .status-tag.orange { background: #fff3e0; color: #e65100; cursor: help; }
+    .status-tag.green { background: #e8f5e9; color: var(--success); }
+
+    /* Tooltip candidats */
+    .tooltip-candidats { position: relative; cursor: help; }
+    .tooltip-candidats:hover::after {
+      content: attr(data-candidats);
+      position: absolute; bottom: 120%; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9); color: white;
+      padding: 8px 14px; border-radius: 8px;
+      font-size: 0.82rem; white-space: nowrap;
+      z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .tooltip-candidats:hover::before {
+      content: '';
+      position: absolute; bottom: 110%; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0,0,0,0.9); z-index: 100;
+    }
+
+    .card-footer { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border: none; border-radius: 10px;
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease;
+      font-family: inherit; text-decoration: none;
+    }
+    .btn:hover { filter: brightness(0.9); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger  { background: var(--danger);  color: white; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-outline:hover { background: var(--primary-light); }
+    .btn-sm { padding: 7px 16px; font-size: 0.82rem; border-radius: 8px; }
+    .btn-block { width: 100%; justify-content: center; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; transform: none; }
+
+    /* Groupement buttons */
+    .btn-grp {
+      padding: 8px 16px; border: 2px solid var(--border);
+      border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+      background: white; color: var(--text);
+    }
+    .btn-grp:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .btn-grp.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(21,101,192,0.3); }
+
+    .actions-bar {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      justify-content: center; margin-top: 28px;
+    }
+
+    /* ===== ICON BUTTON (admin) ===== */
+    .icon-btn {
+      background: none; border: 2px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      cursor: pointer; font-size: 1rem;
+      transition: all 0.2s; display: inline-flex; align-items: center;
+    }
+    .icon-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+    .icon-btn.danger:hover { border-color: var(--danger); background: #ffebee; }
+
+    .admin-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: white; border-radius: 18px;
+      padding: 30px; max-width: 540px; width: 92%;
+      max-height: 88vh; overflow-y: auto;
+      transform: translateY(24px) scale(0.97);
+      transition: transform 0.3s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+    .modal-wide { max-width: 850px; width: 95%; }
+
+    .modal h2 {
+      font-size: 1.25rem; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .close-btn {
+      margin-left: auto; background: none; border: none;
+      font-size: 1.5rem; cursor: pointer; color: var(--text-light);
+      padding: 4px 10px; border-radius: 8px; transition: background 0.2s;
+    }
+    .close-btn:hover { background: #f0f0f0; }
+
+    /* ===== FORM ===== */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 0.85rem; font-weight: 600;
+      margin-bottom: 6px; color: var(--text);
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 11px 16px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: white;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.12);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ===== CANDIDATES LIST ===== */
+    .candidate-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border: 2px solid var(--border);
+      border-radius: 10px; margin-bottom: 8px;
+      cursor: pointer; transition: all 0.2s; user-select: none;
+    }
+    .candidate-item:hover { border-color: var(--primary); background: var(--primary-light); }
+    .candidate-item.selected { border-color: var(--success); background: #e8f5e9; }
+    .candidate-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); pointer-events: none; flex-shrink: 0; }
+    .candidate-item .candidate-info { flex: 1; }
+    .candidate-item .candidate-name { font-weight: 600; font-size: 0.95rem; }
+    .candidate-item .candidate-score {
+      font-size: 0.75rem; color: var(--text-light); margin-top: 3px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .candidate-item .candidate-score .score-badge {
+      background: #fff3e0; color: #e65100; padding: 1px 8px;
+      border-radius: 10px; font-weight: 600;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.95rem; }
+
+    /* ===== LOADING ===== */
+    .loading { text-align: center; padding: 40px; color: var(--text-light); }
+    .spinner {
+      display: inline-block; width: 36px; height: 36px;
+      border: 3px solid #e0e0e0; border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      padding: 14px 28px; border-radius: 12px;
+      color: white; font-weight: 600; font-size: 0.9rem;
+      z-index: 2000; opacity: 0;
+      transition: all 0.3s ease; max-width: 90%;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+
+    /* ===== FORM BUTTONS ROW ===== */
+    .form-buttons {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start;
+    }
+    .form-buttons .btn { flex: 1; min-width: 160px; }
+    .restart-group { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 200px; }
+    .restart-group .btn { width: 100%; }
+    .restart-hint {
+      font-size: 0.7rem; color: var(--text-light); text-align: center;
+      font-style: italic; line-height: 1.3;
+    }
+
+    /* ===== ADMIN TOOLBAR ===== */
+    .admin-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .admin-toolbar-right { font-size: 0.85rem; color: var(--text-light); }
+
+    /* ===== MOBILE TOUCH ===== */
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    /* ===== SPLASH SCREEN (choose mode) ===== */
+    .view-splash {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
+      z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; padding: 30px;
+      text-align: center;
+    }
+    .view-splash.hidden { display: none; }
+    .view-splash h1 { color: white; font-size: 1.6rem; margin-bottom: 4px; }
+    .view-splash p { color: rgba(255,255,255,0.8); font-size: 1rem; margin-bottom: 18px; }
+    .view-splash-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .view-splash-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 28px 34px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      color: white; cursor: pointer;
+      transition: all 0.25s;
+      font-family: inherit;
+      min-width: 180px;
+      backdrop-filter: blur(4px);
+    }
+    .view-splash-btn:hover {
+      background: rgba(255,255,255,0.25);
+      border-color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .view-splash-btn .splash-icon { font-size: 3rem; }
+    .view-splash-btn .splash-label { font-size: 1.1rem; font-weight: 700; }
+    .view-splash-btn .splash-hint { font-size: 0.78rem; opacity: 0.75; }
+
+    /* ===== MODE SWITCH STRIP (always visible, small) ===== */
+    .mode-switch-strip {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #e65100, #fb8c00);
+      gap: 8px;
+    }
+    .mode-switch-strip.visible { display: flex; }
+    .mode-switch-strip span {
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .mode-switch-strip button {
+      background: rgba(255,255,255,0.25);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.5);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .mode-switch-strip button:hover { background: rgba(255,255,255,0.4); }
+
+    /* ===== MOBILE MODE — shown when body has .mobile-mode ===== */
+
+    body.mobile-mode .header { padding: 20px 14px; }
+    body.mobile-mode .header h1 { font-size: 1.35rem; }
+    body.mobile-mode .header p { font-size: 0.9rem; opacity: 0.9; }
+
+    body.mobile-mode .container { padding: 14px 10px; }
+
+    body.mobile-mode .legend {
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    body.mobile-mode .legend-item { font-size: 0.9rem; }
+    body.mobile-mode .legend-dot { width: 16px; height: 16px; }
+
+    body.mobile-mode .events-grid {
+      grid-template-columns: 1fr !important;
+      gap: 16px;
+    }
+
+    body.mobile-mode .event-card {
+      padding: 20px 16px 20px 54px !important;
+      border-left-width: 10px;
+      border-radius: 16px;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.1);
+    }
+    body.mobile-mode .event-card:hover { transform: none; box-shadow: 0 3px 16px rgba(0,0,0,0.1); }
+
+    body.mobile-mode .event-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+      line-height: 1.35;
+      padding-right: 42px;
+    }
+    body.mobile-mode .event-card .badge {
+      min-width: 34px; height: 34px;
+      font-size: 0.9rem;
+      top: 14px; right: 14px;
+    }
+
+    body.mobile-mode .info-row {
+      font-size: 0.95rem;
+      margin-bottom: 7px;
+      gap: 8px;
+    }
+    body.mobile-mode .info-row .icon {
+      font-size: 1.1rem;
+      width: 24px;
+    }
+    body.mobile-mode .info-row.date-row {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    body.mobile-mode .info-row.date-row .icon { font-size: 1.2rem; }
+
+    body.mobile-mode .comment-box {
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+    }
+
+    body.mobile-mode .status-tag {
+      font-size: 0.88rem;
+      padding: 7px 16px;
+      border-radius: 20px;
+    }
+
+    body.mobile-mode .card-footer {
+      margin-top: 14px;
+      gap: 12px;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    body.mobile-mode .card-footer .btn {
+      width: 100%;
+      justify-content: center;
+      padding: 16px 20px;
+      font-size: 1.05rem;
+      min-height: 54px;
+      border-radius: 14px;
+    }
+
+    body.mobile-mode .btn {
+      padding: 14px 22px;
+      font-size: 1rem;
+      min-height: 52px;
+      border-radius: 14px;
+    }
+    body.mobile-mode .btn-sm {
+      padding: 12px 18px;
+      font-size: 0.95rem;
+      min-height: 50px;
+    }
+    body.mobile-mode .icon-btn {
+      padding: 12px 16px;
+      min-height: 50px;
+      min-width: 50px;
+      font-size: 1.15rem;
+    }
+
+    body.mobile-mode .actions-bar {
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    body.mobile-mode .actions-bar .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    body.mobile-mode .modal {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 100vh !important;
+      height: 100vh;
+      border-radius: 0 !important;
+      padding: 20px 16px !important;
+      margin: 0;
+    }
+    body.mobile-mode .modal-overlay {
+      align-items: flex-start;
+    }
+    body.mobile-mode .modal h2 { font-size: 1.2rem; }
+    body.mobile-mode .modal .close-btn { font-size: 1.8rem; padding: 6px 14px; }
+    body.mobile-mode .form-group input,
+    body.mobile-mode .form-group select,
+    body.mobile-mode .form-group textarea {
+      padding: 14px 16px;
+      font-size: 16px;
+      border-radius: 12px;
+    }
+    body.mobile-mode .form-group label {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+    body.mobile-mode .form-row { grid-template-columns: 1fr; }
+    body.mobile-mode .form-buttons { flex-direction: column; }
+    body.mobile-mode .admin-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+    body.mobile-mode .admin-toolbar-left { flex-direction: column; }
+    body.mobile-mode .admin-toolbar-left .btn,
+    body.mobile-mode .admin-toolbar-left .btn-grp { width: 100%; text-align: center; justify-content: center; }
+
+    body.mobile-mode .admin-actions {
+      flex-direction: column;
+      gap: 10px;
+    }
+    body.mobile-mode .admin-actions .icon-btn,
+    body.mobile-mode .admin-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    body.mobile-mode .candidate-item {
+      padding: 16px;
+      min-height: 56px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+    }
+    body.mobile-mode .candidate-item .candidate-name { font-size: 1.05rem; }
+    body.mobile-mode .candidate-item .candidate-score { font-size: 0.85rem; }
+    body.mobile-mode .candidate-item input[type="checkbox"] { width: 24px; height: 24px; }
+
+    body.mobile-mode .type-section-title {
+      font-size: 1.3rem;
+      gap: 12px;
+      padding-bottom: 10px;
+    }
+
+    body.mobile-mode .toast {
+      font-size: 0.95rem;
+      padding: 16px 24px;
+      bottom: 16px;
+      max-width: 96%;
+      border-radius: 16px;
+    }
+
+    body.mobile-mode .scraper-tile {
+      padding: 16px;
+      border-radius: 14px;
+    }
+    body.mobile-mode .scraper-textarea {
+      font-size: 14px;
+      padding: 16px;
+    }
+
+    /* Fallback responsive for non-JS or edge cases */
+    @media (max-width: 600px) {
+      .events-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* ===== SCRAPER ===== */
+    .scraper-textarea {
+      width: 100%; min-height: 180px; padding: 14px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-family: 'Courier New', monospace; font-size: 0.8rem;
+      resize: vertical; transition: border-color 0.2s; background: #fafafa;
+    }
+    .scraper-textarea:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.12);
+    }
+    .scraper-tiles { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .scraper-tile {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 16px; border: 2px solid var(--border);
+      border-radius: 12px; cursor: pointer; transition: all 0.2s;
+      user-select: none; background: white;
+    }
+    .scraper-tile:hover { border-color: var(--primary); background: var(--primary-light); }
+    .scraper-tile.selected { border-color: var(--success); background: #e8f5e9; }
+    .scraper-tile.exists { border-color: #ffcc80; background: #fff8e1; opacity: 0.7; cursor: default; }
+    .scraper-tile input[type="checkbox"] {
+      width: 20px; height: 20px; accent-color: var(--success);
+      flex-shrink: 0; margin-top: 2px; pointer-events: none;
+    }
+    .scraper-tile-info { flex: 1; min-width: 0; }
+    .scraper-tile-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .scraper-tile-details {
+      font-size: 0.82rem; color: var(--text-light); line-height: 2;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    }
+    .scraper-tile-details .edit-field {
+      padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 0.8rem; font-family: inherit; background: white; cursor: text;
+    }
+    .scraper-tile-details .edit-field:focus { outline: none; border-color: var(--primary); }
+    .scraper-tile-badge {
+      font-size: 0.72rem; font-weight: 600; padding: 3px 10px;
+      border-radius: 12px; white-space: nowrap; flex-shrink: 0;
+    }
+    .scraper-tile-badge.warning { background: #fff3e0; color: #e65100; }
+    .scraper-tile-badge.exists-badge { background: #e3f2fd; color: #1565c0; }
+    .scraper-stats {
+      display: flex; gap: 16px; padding: 12px 16px;
+      background: #f8f9fa; border-radius: 10px;
+      font-size: 0.85rem; margin-top: 14px; flex-wrap: wrap;
+    }
+    .scraper-stats strong { color: var(--primary); }
+    .scraper-raw {
+      margin-top: 4px; font-size: 0.72rem; color: #aaa; font-style: italic;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== VIEW CHOICE SPLASH ===== -->
+  <div id="viewSplash" class="view-splash hidden">
+    <h1>🚒 SDIS 66</h1>
+    <p>Comment souhaitez-vous afficher la page ?</p>
+    <div class="view-splash-buttons">
+      <button class="view-splash-btn" onclick="chooseViewMode('mobile')">
+        <span class="splash-icon">📱</span>
+        <span class="splash-label">Téléphone</span>
+        <span class="splash-hint">Grosses tuiles, facile à lire</span>
+      </button>
+      <button class="view-splash-btn" onclick="chooseViewMode('desktop')">
+        <span class="splash-icon">💻</span>
+        <span class="splash-label">Ordinateur</span>
+        <span class="splash-hint">Affichage classique en grille</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== MODE SWITCH STRIP ===== -->
+  <div id="modeSwitchStrip" class="mode-switch-strip">
+    <span id="modeSwitchLabel">📱 Mode téléphone</span>
+    <button onclick="switchViewMode()">Changer d'affichage</button>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <h1>🚒 SDIS 66 — Événements</h1>
+    <p>Gestion des événements et candidatures</p>
+  </div>
+
+  <div class="container">
+
+    <!-- ===== LÉGENDE ===== -->
+    <div class="legend">
+      <span class="legend-title">Légende :</span>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#e53935;"></div>
+        Aucun candidat
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#fb8c00;"></div>
+        Sélection non effectuée
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#43a047;"></div>
+        Sélection effectuée
+      </div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--text);">Trier par :</label>
+        <select id="sortSelect" onchange="renderEvents()" style="padding:6px 12px; border:2px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:inherit; cursor:pointer; background:white;">
+          <option value="date">Date</option>
+          <option value="type">Type d'événement</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ===== EVENTS ===== -->
+    <div id="eventsContainer">
+      <div class="loading"><div class="spinner"></div><p>Chargement des événements...</p></div>
+    </div>
+
+    <!-- ===== ACTIONS ===== -->
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="openNotifModal()">🔔 Demander à être notifié</button>
+      <button class="btn btn-outline" onclick="openAdminLogin()">🔒 Administration</button>
+    </div>
+
+  </div>
+
+  <!-- =============================== MODALS =============================== -->
+
+  <!-- MODAL: Candidater -->
+  <div id="modalCandidater" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal">
+      <h2>📝 Candidater <button class="close-btn" onclick="closeModal('modalCandidater')">&times;</button></h2>
+      <div id="candidaterEventInfo" style="margin-bottom:16px; padding:12px 16px; background:#f8f9fa; border-radius:10px; font-size:0.9rem; color:var(--text-light);"></div>
+      <div class="form-group">
+        <label>Sélectionnez votre nom</label>
+        <select id="candidaterSelect"><option value="">-- Choisissez --</option></select>
+      </div>
+      <button class="btn btn-success btn-block" onclick="submitCandidature()">✅ Je candidate</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Notifications -->
+  <div id="modalNotif" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal">
+      <h2>🔔 Notifications <button class="close-btn" onclick="closeModal('modalNotif')">&times;</button></h2>
+      <p style="margin-bottom:18px; color:var(--text-light); line-height:1.5;">
+        En cochant la case ci-dessous, vous serez notifié(e) par email à chaque fois qu'un nouvel événement est créé.
+        Vous devrez saisir votre matricule pour prouver votre identité.
+      </p>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px 16px; border:2px solid var(--border); border-radius:10px; transition: border-color 0.2s;">
+          <input type="checkbox" id="notifConfirm" onchange="toggleNotifForm()" style="width:20px; height:20px; accent-color:var(--primary);">
+          <span style="font-weight:500;">Je confirme souhaiter recevoir un mail chaque fois qu'un événement est créé</span>
+        </label>
+      </div>
+      <div id="notifFormFields" style="display:none;">
+        <div class="form-group">
+          <label>Votre nom</label>
+          <select id="notifSelect"><option value="">-- Choisissez --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Votre matricule (vérification)</label>
+          <input type="text" id="notifMatricule" placeholder="Saisissez votre matricule">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="submitNotif()">✅ Valider l'inscription</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Admin Login -->
+  <div id="modalAdminLogin" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal">
+      <h2>🔒 Administration <button class="close-btn" onclick="closeModal('modalAdminLogin')">&times;</button></h2>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="adminPassword" placeholder="Mot de passe administrateur"
+               onkeydown="if(event.key==='Enter')submitAdminLogin()">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitAdminLogin()">Connexion</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Admin Panel -->
+  <div id="modalAdmin" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal modal-wide">
+      <h2>⚙️ Panneau d'administration <button class="close-btn" onclick="closeModal('modalAdmin')">&times;</button></h2>
+      <div class="admin-toolbar">
+        <div class="admin-toolbar-left">
+          <button class="btn btn-success" onclick="openCreateEvent()">➕ Créer un événement</button>
+          <button id="btnGrpNord" class="btn-grp" onclick="setGroupementFilter('Nord')">📍 Groupement Nord</button>
+          <button id="btnGrpOuest" class="btn-grp" onclick="setGroupementFilter('Ouest')">📍 Groupement Ouest</button>
+          <button id="btnGrpSud" class="btn-grp" onclick="setGroupementFilter('Sud')">📍 Groupement Sud</button>
+          <button class="btn btn-warning" onclick="openScraper()" style="margin-left:8px;">📋 Scraper ICP</button>
+        </div>
+        <div class="admin-toolbar-right" id="adminEventCount"></div>
+      </div>
+      <div id="adminEventsContainer">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create/Edit Event -->
+  <div id="modalEventForm" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal">
+      <h2 id="eventFormTitle">➕ Créer un événement <button class="close-btn" onclick="closeModal('modalEventForm')">&times;</button></h2>
+      <input type="hidden" id="eventFormId">
+      <div class="form-group">
+        <label>Type d'événement *</label>
+        <select id="eventFormType">
+          <option value="FMPA SSUAP">FMPA SSUAP</option>
+          <option value="SSO ICP">SSO ICP</option>
+          <option value="Garde VLI">Garde VLI</option>
+          <option value="Autres" selected>Autres</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nom de l'événement *</label>
+        <input type="text" id="eventFormNom" placeholder="Ex: Formation secourisme">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="eventFormDate">
+        </div>
+        <div class="form-group">
+          <label>Personnes souhaitées *</label>
+          <input type="number" id="eventFormPlaces" min="1" value="1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Heure de début *</label>
+          <select id="eventFormDebut"></select>
+        </div>
+        <div class="form-group">
+          <label>Heure de fin</label>
+          <select id="eventFormFin">
+            <option value="">--:--</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Lieu *</label>
+        <select id="eventFormLieu" onchange="onLieuChange()">
+          <option value="" disabled selected>-- Choisissez un lieu --</option>
+          <option value="Autre">Autre (lieu personnalisé)</option>
+          <option value="Agly">Agly</option>
+          <option value="Argelès">Argelès</option>
+          <option value="Baixas">Baixas</option>
+          <option value="Banyuls">Banyuls</option>
+          <option value="Canet">Canet</option>
+          <option value="Capcir">Capcir</option>
+          <option value="Caudiès">Caudiès</option>
+          <option value="Cerdagne">Cerdagne</option>
+          <option value="Cerbère">Cerbère</option>
+          <option value="Céret">Céret</option>
+          <option value="Côte Vermeille">Côte Vermeille</option>
+          <option value="Elne">Elne</option>
+          <option value="Font Romeu">Font Romeu</option>
+          <option value="Ille sur Tet">Ille sur Tet</option>
+          <option value="Le Barcarès">Le Barcarès</option>
+          <option value="Le Boulou">Le Boulou</option>
+          <option value="Les Aspres (Thuir)">Les Aspres (Thuir)</option>
+          <option value="Maury">Maury</option>
+          <option value="Millas">Millas</option>
+          <option value="Mont Louis">Mont Louis</option>
+          <option value="Olette">Olette</option>
+          <option value="Palau">Palau</option>
+          <option value="PNord">PNord</option>
+          <option value="POuest">POuest</option>
+          <option value="Porte Puymorens">Porte Puymorens</option>
+          <option value="Prades">Prades</option>
+          <option value="Prats De Mollo">Prats De Mollo</option>
+          <option value="PSud">PSud</option>
+          <option value="Ribéral">Ribéral</option>
+          <option value="Rivesaltes">Rivesaltes</option>
+          <option value="Saillagouse">Saillagouse</option>
+          <option value="Salanque">Salanque</option>
+          <option value="Salses">Salses</option>
+          <option value="Sournia">Sournia</option>
+          <option value="St Cyprien">St Cyprien</option>
+          <option value="St Laurent de Cerdans">St Laurent de Cerdans</option>
+          <option value="St Paul de Fenouillet">St Paul de Fenouillet</option>
+          <option value="Vallespir (Amélie)">Vallespir (Amélie)</option>
+          <option value="Vernet">Vernet</option>
+          <option value="Vinça">Vinça</option>
+          <option value="Vingrau">Vingrau</option>
+        </select>
+      </div>
+      <div class="form-group" id="lieuAutreGroup" style="display:none;">
+        <label>Précision sur le lieu *</label>
+        <input type="text" id="eventFormLieuAutre" placeholder="Ex: Salle polyvalente de Perpignan">
+      </div>
+      <div class="form-group">
+        <label>Commentaire</label>
+        <textarea id="eventFormComment" rows="3" placeholder="Informations complémentaires (facultatif)..."></textarea>
+      </div>
+      <div class="form-buttons">
+        <button class="btn btn-success" onclick="submitEventForm(false)">💾 Enregistrer</button>
+        <div class="restart-group" id="btnRestartGroup">
+          <button class="btn btn-primary" onclick="submitEventForm(true)">💾 Enregistrer et recommencer</button>
+          <span class="restart-hint">Conserve les éléments, utile pour créer plusieurs événements de suite</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Select Candidates -->
+  <div id="modalSelectCandidats" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal" style="max-width:620px;">
+      <h2>👥 Sélection des candidats <button class="close-btn" onclick="closeModal('modalSelectCandidats')">&times;</button></h2>
+      <div id="selectEventInfo" style="margin-bottom:16px; padding:14px; background:#f8f9fa; border-radius:10px; font-size:0.9rem; line-height:1.5;"></div>
+      <p id="selectPlacesInfo" style="margin-bottom:14px; font-weight:600; font-size:0.92rem;"></p>
+      <div id="selectCandidatsList"></div>
+      <button class="btn btn-success btn-block" style="margin-top:18px;" onclick="submitSelection()">✅ Valider la sélection</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Scraper ICP -->
+  <div id="modalScraper" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal modal-wide">
+      <h2>📋 Scraper ICP sans ISP <button class="close-btn" onclick="closeModal('modalScraper')">&times;</button></h2>
+      <p style="margin-bottom:14px; color:var(--text-light); line-height:1.5;">
+        Collez ci-dessous le contenu copié depuis la page des sessions ICP.<br>
+        Le système détectera automatiquement les <strong>sessions ICP sans ISP</strong> et vous proposera de les créer comme événements.
+      </p>
+      <textarea id="scraperTextarea" class="scraper-textarea" placeholder="Collez ici le contenu de la page des sessions ICP..."></textarea>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="parseScraper()">🔍 Analyser le contenu</button>
+        <button class="btn btn-outline btn-sm" onclick="clearScraper()">🗑️ Effacer</button>
+      </div>
+      <div id="scraperResults"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- =============================== JAVASCRIPT =============================== -->
+  <script>
+    /* ===== VIEW MODE: SPLASH + TOGGLE ===== */
+    function initViewMode() {
+      var saved = null;
+      try { saved = localStorage.getItem('sdis66-view-mode'); } catch(e) {}
+
+      if (!saved) {
+        // No choice yet → show splash screen
+        document.getElementById('viewSplash').classList.remove('hidden');
+        return;
+      }
+
+      applyViewMode(saved);
+    }
+
+    function chooseViewMode(mode) {
+      try { localStorage.setItem('sdis66-view-mode', mode); } catch(e) {}
+      document.getElementById('viewSplash').classList.add('hidden');
+      applyViewMode(mode);
+    }
+
+    function applyViewMode(mode) {
+      var strip = document.getElementById('modeSwitchStrip');
+      var label = document.getElementById('modeSwitchLabel');
+      if (mode === 'mobile') {
+        document.body.classList.add('mobile-mode');
+        if (label) label.textContent = '📱 Mode téléphone';
+      } else {
+        document.body.classList.remove('mobile-mode');
+        if (label) label.textContent = '💻 Mode ordinateur';
+      }
+      if (strip) strip.classList.add('visible');
+    }
+
+    function switchViewMode() {
+      var isCurrentlyMobile = document.body.classList.contains('mobile-mode');
+      var newMode = isCurrentlyMobile ? 'desktop' : 'mobile';
+      try { localStorage.setItem('sdis66-view-mode', newMode); } catch(e) {}
+      applyViewMode(newMode);
+      window.scrollTo(0, 0);
+    }
+
+    // Init immediately
+    initViewMode();
+
+    var allEvents = [];
+    var agentsList = [];
+    var currentCandidateEventId = null;
+    var currentSelectEventId = null;
+    var adminGroupementFilter = null;
+    var scraperSessions = [];
+
+    /* ===== LIEUX → GROUPEMENT MAPPING ===== */
+    var LIEU_GROUPEMENT = {
+      "Agly": "Nord",
+      "Argelès": "Sud",
+      "Baixas": "Nord",
+      "Banyuls": "Sud",
+      "Canet": "Nord",
+      "Capcir": "Ouest",
+      "Caudiès": "Nord",
+      "Cerdagne": "Ouest",
+      "Cerbère": "Sud",
+      "Céret": "Sud",
+      "Côte Vermeille": "Sud",
+      "Elne": "Sud",
+      "Font Romeu": "Ouest",
+      "Ille sur Tet": "Nord",
+      "Le Barcarès": "Nord",
+      "Le Boulou": "Sud",
+      "Les Aspres (Thuir)": "Sud",
+      "Maury": "Nord",
+      "Millas": "Nord",
+      "Mont Louis": "Ouest",
+      "Olette": "Ouest",
+      "Palau": "Sud",
+      "PNord": "Nord",
+      "POuest": "Sud",
+      "Porte Puymorens": "Ouest",
+      "Prades": "Ouest",
+      "Prats De Mollo": "Sud",
+      "PSud": "Sud",
+      "Ribéral": "Nord",
+      "Rivesaltes": "Nord",
+      "Saillagouse": "Ouest",
+      "Salanque": "Nord",
+      "Salses": "Nord",
+      "Sournia": "Ouest",
+      "St Cyprien": "Sud",
+      "St Laurent de Cerdans": "Sud",
+      "St Paul de Fenouillet": "Nord",
+      "Vallespir (Amélie)": "Sud",
+      "Vernet": "Ouest",
+      "Vinça": "Ouest",
+      "Vingrau": "Nord"
+    };
+
+    var TYPE_ICONS = {
+      "SSO ICP": "🏃",
+      "FMPA SSUAP": "👨‍🏫",
+      "Garde VLI": "🚑",
+      "Autres": "📦"
+    };
+
+    /* ===== MOIS FRANÇAIS ===== */
+    var MOIS_FR = {
+      'janvier':'01','février':'02','fevrier':'02','mars':'03',
+      'avril':'04','mai':'05','juin':'06','juillet':'07',
+      'août':'08','aout':'08','septembre':'09','octobre':'10',
+      'novembre':'11','décembre':'12','decembre':'12'
+    };
+
+    // Deep-link event ID injected by server (doGet)
+    var DEEP_LINK_EVENT_ID = '<?= deepLinkEventId ?>';
+
+    /* ===== GENERATE TIME OPTIONS (every 15 min) ===== */
+    function populateTimeSelects() {
+      var debutSel = document.getElementById('eventFormDebut');
+      var finSel = document.getElementById('eventFormFin');
+      debutSel.innerHTML = '<option value="">--:--</option>';
+      finSel.innerHTML = '<option value="">--:--</option>';
+      for (var h = 0; h < 24; h++) {
+        for (var m = 0; m < 60; m += 15) {
+          var val = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+          debutSel.innerHTML += '<option value="' + val + '">' + val + '</option>';
+          finSel.innerHTML += '<option value="' + val + '">' + val + '</option>';
+        }
+      }
+    }
+
+    /** Arrondit une heure au quart d'heure le plus proche */
+    function roundTo15(timeStr) {
+      if (!timeStr || timeStr.indexOf(':') === -1) return timeStr || '';
+      var p = timeStr.split(':');
+      var h = parseInt(p[0]); var m = parseInt(p[1]);
+      m = Math.round(m / 15) * 15;
+      if (m === 60) { m = 0; h = (h + 1) % 24; }
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+
+    /* ===== INIT ===== */
+    window.onload = function() {
+      populateTimeSelects();
+      loadEvents(function() {
+        // Deep-link: ?candidater=eventId → auto-open candidature modal
+        if (DEEP_LINK_EVENT_ID) {
+          var evt = allEvents.find(function(e) { return e.id === DEEP_LINK_EVENT_ID; });
+          if (evt && evt.statut !== 'cloturé' && evt.retenus.length === 0) {
+            openCandidater(DEEP_LINK_EVENT_ID);
+          }
+        }
+      });
+      loadAgents();
+    };
+
+    function loadEvents(callback) {
+      google.script.run
+        .withSuccessHandler(function(events) {
+          allEvents = events || [];
+          renderEvents();
+          if (callback) callback();
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('eventsContainer').innerHTML =
+            '<div class="empty-state"><div class="icon">⚠️</div><p>Erreur de chargement des événements</p></div>';
+        })
+        .getUpcomingEvents();
+    }
+
+    function loadAgents() {
+      google.script.run
+        .withSuccessHandler(function(agents) {
+          agentsList = agents || [];
+          populateDropdowns();
+        })
+        .withFailureHandler(function() {})
+        .getAgentsList();
+    }
+
+    /* ===== HELPERS ===== */
+    function getEventGroupement(lieu) {
+      if (!lieu) return null;
+      // Si "Autre: blabla", pas de groupement
+      if (lieu.indexOf("Autre: ") === 0) return null;
+      return LIEU_GROUPEMENT[lieu] || null;
+    }
+
+    function displayLieu(lieu) {
+      if (!lieu) return '';
+      if (lieu.indexOf("Autre: ") === 0) return lieu.substring(7);
+      return lieu;
+    }
+
+    function getEventStatus(evt) {
+      if (evt.retenus.length > 0 || evt.statut === "cloturé") return "green";
+      if (evt.candidats.length > 0) return "orange";
+      return "red";
+    }
+
+    function getStatusTag(evt) {
+      var status = getEventStatus(evt);
+      if (status === "green") return '<span class="status-tag green">✅ Sélection effectuée</span>';
+      if (status === "orange") {
+        var candidatsTooltip = evt.candidats.join(', ');
+        return '<span class="status-tag orange tooltip-candidats" data-candidats="' + esc(candidatsTooltip) + '" title="' + esc(candidatsTooltip) + '">⏳ Sélection non effectuée</span>';
+      }
+      return '<span class="status-tag red">🔴 Aucun candidat</span>';
+    }
+
+    /* ===== RENDER EVENT CARD (shared) ===== */
+    function renderEventCard(evt) {
+      var status = getEventStatus(evt);
+      var canCandidate = evt.statut !== "cloturé" && evt.retenus.length === 0;
+      var typeIcon = TYPE_ICONS[evt.type] || "📦";
+      var candidatsTooltip = evt.candidats.length > 0 ? evt.candidats.join(', ') : 'Aucun candidat';
+      var lieuDisplay = displayLieu(evt.lieu);
+
+      var html = '';
+      html += '<div class="event-card status-' + status + '" style="position:relative; padding-left:44px;">';
+      html += '  <div style="position:absolute; left:10px; top:12px; font-size:1.4rem;">' + typeIcon + '</div>';
+      html += '  <div class="badge tooltip-candidats" data-candidats="' + esc(candidatsTooltip) + '" title="' + esc(candidatsTooltip) + '">' + evt.candidats.length + '</div>';
+      html += '  <h3>' + esc(evt.nom) + '</h3>';
+      html += '  <div class="info-row date-row"><span class="icon">📅</span> ' + evt.date + '</div>';
+      html += '  <div class="info-row"><span class="icon">🕐</span> ' + evt.heureDebut + ' → ' + evt.heureFin + '</div>';
+      html += '  <div class="info-row"><span class="icon">📍</span> ' + esc(lieuDisplay) + '</div>';
+      html += '  <div class="info-row"><span class="icon">👥</span> ' + evt.places + ' personne(s) souhaitée(s)</div>';
+      if (evt.commentaire) {
+        html += '  <div class="comment-box">💬 ' + esc(evt.commentaire) + '</div>';
+      }
+      html += '  <div class="card-footer">';
+      html += '    ' + getStatusTag(evt);
+      if (canCandidate) {
+        html += '    <button class="btn btn-primary btn-sm" onclick="openCandidater(\'' + evt.id + '\')">📝 Candidater</button>';
+      }
+      html += '  </div>';
+      html += '</div>';
+      return html;
+    }
+
+    /* ===== RENDER PUBLIC EVENTS ===== */
+    function renderEvents() {
+      var container = document.getElementById('eventsContainer');
+
+      if (allEvents.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Aucun événement à venir pour le moment.</p></div>';
+        return;
+      }
+
+      var sortBy = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'date';
+      var sortedEvents = allEvents.slice();
+
+      if (sortBy === 'type') {
+        // Group by type with section titles
+        var typeOrder = ['SSO ICP', 'FMPA SSUAP', 'Garde VLI', 'Autres'];
+        var grouped = {};
+        sortedEvents.forEach(function(evt) {
+          var t = evt.type || 'Autres';
+          if (!grouped[t]) grouped[t] = [];
+          grouped[t].push(evt);
+        });
+        // Sort within each group by date
+        Object.keys(grouped).forEach(function(t) {
+          grouped[t].sort(function(a, b) { return a.dateRaw - b.dateRaw; });
+        });
+
+        var html = '';
+        typeOrder.forEach(function(type) {
+          if (!grouped[type] || grouped[type].length === 0) return;
+          var icon = TYPE_ICONS[type] || '📦';
+          html += '<div class="type-section">';
+          html += '  <div class="type-section-title">';
+          html += '    <span style="font-size:1.5rem;">' + icon + '</span> ' + type;
+          html += '    <span class="count">(' + grouped[type].length + ')</span>';
+          html += '  </div>';
+          html += '  <div class="events-grid">';
+          grouped[type].forEach(function(evt) {
+            html += renderEventCard(evt);
+          });
+          html += '  </div>';
+          html += '</div>';
+        });
+
+        // Handle types not in typeOrder
+        Object.keys(grouped).forEach(function(type) {
+          if (typeOrder.indexOf(type) === -1 && grouped[type].length > 0) {
+            html += '<div class="type-section">';
+            html += '  <div class="type-section-title"><span style="font-size:1.5rem;">📦</span> ' + type + ' <span class="count">(' + grouped[type].length + ')</span></div>';
+            html += '  <div class="events-grid">';
+            grouped[type].forEach(function(evt) { html += renderEventCard(evt); });
+            html += '  </div></div>';
+          }
+        });
+
+        container.innerHTML = html;
+      } else {
+        // Sort by date (flat grid)
+        sortedEvents.sort(function(a, b) { return a.dateRaw - b.dateRaw; });
+        var html = '<div class="events-grid">';
+        sortedEvents.forEach(function(evt) {
+          html += renderEventCard(evt);
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+    }
+
+    /* ===== CANDIDATER ===== */
+    function openCandidater(eventId) {
+      currentCandidateEventId = eventId;
+      var evt = allEvents.find(function(e) { return e.id === eventId; });
+      if (!evt) return;
+      var lieuDisplay = displayLieu(evt.lieu);
+
+      document.getElementById('candidaterEventInfo').innerHTML =
+        '<strong>' + esc(evt.nom) + '</strong><br>' +
+        '📅 ' + evt.date + '  •  🕐 ' + evt.heureDebut + ' → ' + evt.heureFin + '<br>' +
+        '📍 ' + esc(lieuDisplay);
+
+      document.getElementById('candidaterSelect').selectedIndex = 0;
+      openModal('modalCandidater');
+    }
+
+    function submitCandidature() {
+      var nom = document.getElementById('candidaterSelect').value;
+      if (!nom) { showToast("Veuillez sélectionner votre nom.", "error"); return; }
+
+      showToast("Envoi en cours...", "info");
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            showToast(r.message, "success");
+            closeModal('modalCandidater');
+            loadEvents();
+          } else {
+            showToast(r.message, "error");
+          }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .postuler(currentCandidateEventId, nom);
+    }
+
+    /* ===== NOTIFICATIONS ===== */
+    function openNotifModal() {
+      document.getElementById('notifConfirm').checked = false;
+      document.getElementById('notifFormFields').style.display = 'none';
+      document.getElementById('notifMatricule').value = '';
+      openModal('modalNotif');
+    }
+
+    function toggleNotifForm() {
+      var checked = document.getElementById('notifConfirm').checked;
+      document.getElementById('notifFormFields').style.display = checked ? 'block' : 'none';
+    }
+
+    function submitNotif() {
+      var sel = document.getElementById('notifSelect');
+      var nom = sel.value;
+      var matricule = document.getElementById('notifMatricule').value.trim();
+      if (!nom) { showToast("Veuillez sélectionner votre nom.", "error"); return; }
+
+      var opt = sel.options[sel.selectedIndex];
+      if (opt && opt.getAttribute('data-notif') === 'true') {
+        showToast("Vous êtes déjà inscrit pour être notifié.", "info");
+        return;
+      }
+
+      if (!matricule) { showToast("Veuillez saisir votre matricule.", "error"); return; }
+
+      showToast("Vérification...", "info");
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            showToast(r.message, "success");
+            closeModal('modalNotif');
+          } else {
+            showToast(r.message, "error");
+          }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .subscribeNotif(nom, matricule);
+    }
+
+    /* ===== ADMIN LOGIN ===== */
+    function openAdminLogin() {
+      document.getElementById('adminPassword').value = '';
+      openModal('modalAdminLogin');
+    }
+
+    function submitAdminLogin() {
+      var pwd = document.getElementById('adminPassword').value;
+      if (!pwd) { showToast("Entrez le mot de passe.", "error"); return; }
+
+      google.script.run
+        .withSuccessHandler(function(valid) {
+          if (valid) {
+            closeModal('modalAdminLogin');
+            openAdminPanel();
+          } else {
+            showToast("Mot de passe incorrect.", "error");
+          }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .verifyAdmin(pwd);
+    }
+
+    /* ===== ADMIN PANEL ===== */
+    function openAdminPanel() {
+      adminGroupementFilter = null;
+      updateGroupementButtons();
+      openModal('modalAdmin');
+      renderAdminEvents();
+    }
+
+    function setGroupementFilter(grp) {
+      if (adminGroupementFilter === grp) {
+        adminGroupementFilter = null;
+      } else {
+        adminGroupementFilter = grp;
+      }
+      updateGroupementButtons();
+      renderAdminEvents();
+    }
+
+    function updateGroupementButtons() {
+      ['Nord', 'Ouest', 'Sud'].forEach(function(g) {
+        var btn = document.getElementById('btnGrp' + g);
+        if (btn) {
+          if (adminGroupementFilter === g) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    function renderAdminEvents() {
+      var container = document.getElementById('adminEventsContainer');
+      var countEl = document.getElementById('adminEventCount');
+
+      // Filter events based on groupement
+      var filteredEvents;
+      if (adminGroupementFilter) {
+        filteredEvents = allEvents.filter(function(evt) {
+          // Only show FMPA SSUAP of this groupement
+          if (evt.type !== "FMPA SSUAP") return false;
+          var grp = getEventGroupement(evt.lieu);
+          return grp === adminGroupementFilter;
+        });
+      } else {
+        filteredEvents = allEvents;
+      }
+
+      if (filteredEvents.length === 0) {
+        var msg = adminGroupementFilter
+          ? 'Aucun événement FMPA SSUAP pour le Groupement ' + adminGroupementFilter
+          : 'Aucun événement à venir';
+        container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>' + msg + '</p></div>';
+        countEl.textContent = adminGroupementFilter ? 'Filtre : Groupement ' + adminGroupementFilter : '';
+        return;
+      }
+
+      var filterLabel = adminGroupementFilter ? ' (Groupement ' + adminGroupementFilter + ' — FMPA SSUAP uniquement)' : '';
+      countEl.textContent = filteredEvents.length + ' événement(s)' + filterLabel;
+
+      var html = '';
+      filteredEvents.forEach(function(evt) {
+        var status = getEventStatus(evt);
+        var canSelect = evt.candidats.length > 0 && evt.retenus.length === 0 && evt.statut !== "cloturé";
+        var typeIcon = TYPE_ICONS[evt.type] || "📦";
+        var lieuDisplay = displayLieu(evt.lieu);
+
+        html += '<div class="event-card status-' + status + '" style="margin-bottom:16px; position:relative; padding-left:60px;">';
+        html += '  <div style="position:absolute; left:18px; top:22px; font-size:2rem;">' + typeIcon + '</div>';
+        html += '  <div class="badge">' + evt.candidats.length + '</div>';
+        html += '  <h3>' + esc(evt.nom) + '</h3>';
+        html += '  <div class="info-row"><span class="icon">📅</span> ' + evt.date + '  •  🕐 ' + evt.heureDebut + ' → ' + evt.heureFin + '</div>';
+        html += '  <div class="info-row"><span class="icon">📍</span> ' + esc(lieuDisplay) + '  •  👥 ' + evt.places + ' place(s)</div>';
+        if (evt.commentaire) {
+          html += '  <div class="comment-box">💬 ' + esc(evt.commentaire) + '</div>';
+        }
+        html += '  <div style="margin-top:10px;">' + getStatusTag(evt) + '</div>';
+
+        // Retenus display
+        if (evt.retenus.length > 0) {
+          html += '  <div style="margin-top:10px; padding:10px 14px; background:#e8f5e9; border-radius:10px; font-size:0.85rem;">';
+          html += '    <strong>✅ Retenus :</strong> ' + evt.retenus.map(function(n){ return esc(n); }).join(', ');
+          html += '  </div>';
+        }
+
+        html += '  <div class="admin-actions">';
+        html += '    <button class="icon-btn" onclick="openEditEvent(\'' + evt.id + '\')" title="Modifier">✏️ Modifier</button>';
+        html += '    <button class="icon-btn danger" onclick="confirmDeleteEvent(\'' + evt.id + '\')" title="Supprimer">❌ Supprimer</button>';
+        if (canSelect) {
+          html += '    <button class="btn btn-primary btn-sm" onclick="openSelectCandidats(\'' + evt.id + '\')">👥 Choisir parmi les candidats (' + evt.candidats.length + ')</button>';
+        }
+        html += '  </div>';
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* ===== LIEU CHANGE HANDLER ===== */
+    function onLieuChange() {
+      var val = document.getElementById('eventFormLieu').value;
+      var autreGroup = document.getElementById('lieuAutreGroup');
+      if (val === 'Autre') {
+        autreGroup.style.display = 'block';
+      } else {
+        autreGroup.style.display = 'none';
+        document.getElementById('eventFormLieuAutre').value = '';
+      }
+    }
+
+    /* ===== CREATE / EDIT EVENT ===== */
+    function openCreateEvent() {
+      document.getElementById('eventFormTitle').innerHTML = '➕ Créer un événement <button class="close-btn" onclick="closeModal(\'modalEventForm\')">&times;</button>';
+      document.getElementById('eventFormId').value = '';
+      document.getElementById('eventFormNom').value = '';
+      document.getElementById('eventFormDate').value = '';
+      document.getElementById('eventFormDebut').value = '';
+      document.getElementById('eventFormFin').value = '';
+      document.getElementById('eventFormLieu').value = '';
+      document.getElementById('eventFormLieuAutre').value = '';
+      document.getElementById('lieuAutreGroup').style.display = 'none';
+      document.getElementById('eventFormComment').value = '';
+      document.getElementById('eventFormPlaces').value = '1';
+      document.getElementById('eventFormType').value = 'Autres';
+      // Show restart button for creation mode
+      document.getElementById('btnRestartGroup').style.display = 'flex';
+      openModal('modalEventForm');
+    }
+
+    function openEditEvent(eventId) {
+      var evt = allEvents.find(function(e) { return e.id === eventId; });
+      if (!evt) return;
+
+      document.getElementById('eventFormTitle').innerHTML = '✏️ Modifier l\'événement <button class="close-btn" onclick="closeModal(\'modalEventForm\')">&times;</button>';
+      document.getElementById('eventFormId').value = evt.id;
+      document.getElementById('eventFormNom').value = evt.nom;
+      // DD/MM/YYYY → YYYY-MM-DD
+      var parts = evt.date.split('/');
+      document.getElementById('eventFormDate').value = parts[2] + '-' + parts[1] + '-' + parts[0];
+      document.getElementById('eventFormDebut').value = roundTo15(evt.heureDebut);
+      document.getElementById('eventFormFin').value = roundTo15(evt.heureFin);
+      document.getElementById('eventFormComment').value = evt.commentaire;
+      document.getElementById('eventFormPlaces').value = evt.places;
+      document.getElementById('eventFormType').value = evt.type || 'Autres';
+
+      // Handle lieu dropdown
+      var lieuSelect = document.getElementById('eventFormLieu');
+      var lieuAutreGroup = document.getElementById('lieuAutreGroup');
+      var lieuAutreInput = document.getElementById('eventFormLieuAutre');
+
+      if (evt.lieu && evt.lieu.indexOf('Autre: ') === 0) {
+        lieuSelect.value = 'Autre';
+        lieuAutreInput.value = evt.lieu.substring(7);
+        lieuAutreGroup.style.display = 'block';
+      } else {
+        // Check if it's a known lieu
+        var found = false;
+        for (var i = 0; i < lieuSelect.options.length; i++) {
+          if (lieuSelect.options[i].value === evt.lieu) {
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          lieuSelect.value = evt.lieu;
+          lieuAutreGroup.style.display = 'none';
+          lieuAutreInput.value = '';
+        } else {
+          // Unknown lieu → treat as Autre
+          lieuSelect.value = 'Autre';
+          lieuAutreInput.value = evt.lieu;
+          lieuAutreGroup.style.display = 'block';
+        }
+      }
+
+      // Hide restart button for edit mode
+      document.getElementById('btnRestartGroup').style.display = 'none';
+      openModal('modalEventForm');
+    }
+
+    function getFormLieu() {
+      var lieuSelect = document.getElementById('eventFormLieu').value;
+      if (lieuSelect === 'Autre') {
+        var precision = document.getElementById('eventFormLieuAutre').value.trim();
+        if (!precision) return null; // validation will catch this
+        return "Autre: " + precision;
+      }
+      return lieuSelect;
+    }
+
+    function submitEventForm(andRestart) {
+      var id = document.getElementById('eventFormId').value;
+      var nom = document.getElementById('eventFormNom').value.trim();
+      var date = document.getElementById('eventFormDate').value;
+      var heureDebut = document.getElementById('eventFormDebut').value;
+      var heureFin = document.getElementById('eventFormFin').value;
+      var lieu = getFormLieu();
+      var commentaire = document.getElementById('eventFormComment').value.trim();
+      var places = document.getElementById('eventFormPlaces').value;
+      var type = document.getElementById('eventFormType').value;
+
+      if (!nom || !date || !heureDebut || !lieu) {
+        if (document.getElementById('eventFormLieu').value === 'Autre' && !document.getElementById('eventFormLieuAutre').value.trim()) {
+          showToast("Veuillez préciser le lieu.", "error");
+        } else {
+          showToast("Veuillez remplir tous les champs obligatoires (*).", "error");
+        }
+        return;
+      }
+
+      var data = {
+        nom: nom, date: date, heureDebut: heureDebut,
+        heureFin: heureFin, lieu: lieu,
+        commentaire: commentaire, places: places, type: type
+      };
+
+      showToast("Enregistrement...", "info");
+
+      if (id) {
+        // Update mode (no restart possible)
+        data.id = id;
+        google.script.run
+          .withSuccessHandler(function(r) {
+            if (r.success) {
+              showToast("Événement modifié !", "success");
+              closeModal('modalEventForm');
+              loadEvents(renderAdminEvents);
+            } else { showToast(r.message || "Erreur", "error"); }
+          })
+          .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+          .updateEvent(data);
+      } else {
+        // Create mode
+        google.script.run
+          .withSuccessHandler(function(r) {
+            if (r.success) {
+              if (andRestart) {
+                showToast("✅ Événement créé ! Formulaire prêt pour le suivant.", "success");
+                // Keep form open with same values, just clear the ID
+                document.getElementById('eventFormId').value = '';
+                loadEvents(renderAdminEvents);
+              } else {
+                showToast("Événement créé ! Notifications envoyées aux abonnés.", "success");
+                closeModal('modalEventForm');
+                loadEvents(renderAdminEvents);
+              }
+            } else { showToast(r.message || "Erreur", "error"); }
+          })
+          .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+          .createEvent(data);
+      }
+    }
+
+    function confirmDeleteEvent(eventId) {
+      var evt = allEvents.find(function(e) { return e.id === eventId; });
+      if (!evt) return;
+      if (!confirm("Supprimer l'événement \"" + evt.nom + "\" ?\nCette action est irréversible.")) return;
+
+      showToast("Suppression...", "info");
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            showToast("Événement supprimé.", "success");
+            loadEvents(renderAdminEvents);
+          } else { showToast("Erreur lors de la suppression.", "error"); }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .deleteEvent(eventId);
+    }
+
+    /* ===== SELECT CANDIDATES (with scoring) ===== */
+    function openSelectCandidats(eventId) {
+      currentSelectEventId = eventId;
+      var evt = allEvents.find(function(e) { return e.id === eventId; });
+      if (!evt) return;
+
+      var lieuDisplay = displayLieu(evt.lieu);
+
+      document.getElementById('selectEventInfo').innerHTML =
+        '<strong style="font-size:1.05rem;">' + esc(evt.nom) + '</strong><br>' +
+        '📅 ' + evt.date + '  •  🕐 ' + evt.heureDebut + ' → ' + evt.heureFin + '<br>' +
+        '📍 ' + esc(lieuDisplay) +
+        (evt.commentaire ? '<br>💬 <em>' + esc(evt.commentaire) + '</em>' : '');
+
+      document.getElementById('selectPlacesInfo').textContent =
+        'Personnes souhaitées : ' + evt.places + '  |  Candidats : ' + evt.candidats.length;
+
+      // Show loading while fetching scores
+      document.getElementById('selectCandidatsList').innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement des scores...</p></div>';
+      openModal('modalSelectCandidats');
+
+      // Fetch scoring data from server
+      google.script.run
+        .withSuccessHandler(function(scores) {
+          renderCandidatesList(evt, scores || {});
+        })
+        .withFailureHandler(function() {
+          renderCandidatesList(evt, {});
+        })
+        .getCandidateScores();
+    }
+
+    function renderCandidatesList(evt, scores) {
+      var html = '';
+      evt.candidats.forEach(function(nom) {
+        var s = scores[nom] || { postulations: 0, selections: 0, score: 0 };
+        html += '<div class="candidate-item" onclick="toggleCandidate(this)">';
+        html += '  <input type="checkbox" value="' + esc(nom) + '">';
+        html += '  <div class="candidate-info">';
+        html += '    <div class="candidate-name">' + esc(nom) + '</div>';
+        html += '    <div class="candidate-score">';
+        html += '      A postulé : <strong>' + s.postulations + '</strong> fois';
+        html += '      &nbsp;•&nbsp; A été choisi : <strong>' + s.selections + '</strong> fois';
+        html += '      &nbsp;•&nbsp; <span class="score-badge">Score : ' + s.score + '</span>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+      });
+      document.getElementById('selectCandidatsList').innerHTML = html;
+    }
+
+    function toggleCandidate(el) {
+      var cb = el.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      el.classList.toggle('selected', cb.checked);
+    }
+
+    function submitSelection() {
+      var checkboxes = document.querySelectorAll('#selectCandidatsList input[type="checkbox"]:checked');
+      var selected = [];
+      checkboxes.forEach(function(cb) { selected.push(cb.value); });
+
+      if (selected.length === 0) {
+        showToast("Sélectionnez au moins un candidat.", "error");
+        return;
+      }
+
+      if (!confirm("Valider la sélection de " + selected.length + " candidat(s) ?\n\nLes candidats retenus et non retenus seront notifiés par email.\nLes agents ne pourront plus candidater sur cet événement.")) return;
+
+      showToast("Validation et envoi des emails...", "info");
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            showToast(r.message, "success");
+            closeModal('modalSelectCandidats');
+            loadEvents(renderAdminEvents);
+          } else { showToast(r.message || "Erreur", "error"); }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .selectCandidats(currentSelectEventId, selected);
+    }
+
+    /* ===== SCRAPER ICP ===== */
+    function openScraper() {
+      document.getElementById('scraperTextarea').value = '';
+      document.getElementById('scraperResults').innerHTML = '';
+      scraperSessions = [];
+      openModal('modalScraper');
+    }
+
+    function clearScraper() {
+      document.getElementById('scraperTextarea').value = '';
+      document.getElementById('scraperResults').innerHTML = '';
+      scraperSessions = [];
+    }
+
+    /* ===== FUZZY LIEU MATCHING ===== */
+    function normLieu(s) {
+      return s
+        .replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ïî]/g,'i')
+        .replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/[ç]/g,'c')
+        .replace(/\bSainte?\b/gi,'st')
+        .replace(/[\-']/g,' ')
+        .replace(/\(([^)]+)\)/g, ' $1 ')
+        .replace(/\b(en|de|du|des|la|le|les|sur|sous|lès|l)\b/gi,' ')
+        .replace(/\s+/g,' ').trim().toLowerCase();
+    }
+
+    function findBestLieu(cisName) {
+      var knownLieux = Object.keys(LIEU_GROUPEMENT);
+      var normCIS = normLieu(cisName);
+      var bestMatch = '';
+      var bestScore = 0;
+
+      knownLieux.forEach(function(lieu) {
+        var normL = normLieu(lieu);
+        var score = 0;
+
+        // Exact match after normalization
+        if (normCIS === normL) { score = 100; }
+        // One contains the other entirely
+        else if (normCIS.indexOf(normL) !== -1 || normL.indexOf(normCIS) !== -1) {
+          score = 80;
+        } else {
+          // Word overlap
+          var w1 = normCIS.split(' ').filter(function(w) { return w.length > 1; });
+          var w2 = normL.split(' ').filter(function(w) { return w.length > 1; });
+          var common = 0;
+          w1.forEach(function(a) {
+            w2.forEach(function(b) {
+              if (a === b) { common += 1; }
+              else if (a.length > 3 && b.length > 3 && (a.indexOf(b) !== -1 || b.indexOf(a) !== -1)) { common += 0.7; }
+            });
+          });
+          if (common > 0) {
+            score = (common / Math.max(w1.length, w2.length)) * 70;
+          }
+        }
+
+        if (score > bestScore) { bestScore = score; bestMatch = lieu; }
+      });
+
+      return bestScore >= 30 ? bestMatch : '';
+    }
+
+    /* ===== PARSE: structured ICP page (how_to_reg / CIS / medical_services) ===== */
+    function parseStructuredICP(text) {
+      // Split by "how_to_reg" — each occurrence = a new session block
+      var parts = text.split(/how_to_reg/i);
+      var sessions = [];
+      var currentYear = new Date().getFullYear();
+
+      // ===== CARRY-FORWARD: last seen date persists across blocks =====
+      var lastDateISO = '';
+      var lastDateStr = '';
+
+      parts.forEach(function(block) {
+        block = block.trim();
+        if (!block || block.length < 10) return;
+
+        var lines = block.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+
+        // ===== Detect ISP status =====
+        var isEnAttente = /en\s*attente/i.test(block);
+
+        if (!isEnAttente) {
+          // Check line after "medical_services" for an assigned ISP name
+          var hasISP = false;
+          for (var i = 0; i < lines.length; i++) {
+            if (lines[i].toLowerCase() === 'medical_services' && i + 1 < lines.length) {
+              var ispLine = lines[i + 1].trim();
+              if (ispLine && ispLine.length > 2 &&
+                  !/en\s*attente/i.test(ispLine) &&
+                  !/^(non|aucun|néant|sans|pas|\-|–|\/|\?)/i.test(ispLine)) {
+                hasISP = true;
+              }
+            }
+          }
+
+          // ALSO parse date from blocks WITH ISP so we carry it forward
+          for (var i = 0; i < lines.length; i++) {
+            var dm = lines[i].match(/(\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)(?:\s+(\d{4}))?/i);
+            if (dm) {
+              var day = dm[1].length === 1 ? '0' + dm[1] : dm[1];
+              var monthName = dm[2].toLowerCase().replace('é','e').replace('û','u');
+              var month = MOIS_FR[monthName] || MOIS_FR[dm[2].toLowerCase()] || '01';
+              var year = dm[3] || String(currentYear);
+              lastDateISO = year + '-' + month + '-' + day;
+              lastDateStr = day + '/' + month + '/' + year;
+              break;
+            }
+          }
+
+          if (hasISP) return; // Session has ISP → skip, but date was saved
+        }
+
+        // ===== Parse date (French: "Vendredi 27 mars" or "27 mars 2026") =====
+        var dateISO = '';
+        var dateStr = '';
+        for (var i = 0; i < lines.length; i++) {
+          var dm = lines[i].match(/(\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)(?:\s+(\d{4}))?/i);
+          if (dm) {
+            var day = dm[1].length === 1 ? '0' + dm[1] : dm[1];
+            var monthName = dm[2].toLowerCase().replace('é','e').replace('û','u');
+            var month = MOIS_FR[monthName] || MOIS_FR[dm[2].toLowerCase()] || '01';
+            var year = dm[3] || String(currentYear);
+            dateISO = year + '-' + month + '-' + day;
+            dateStr = day + '/' + month + '/' + year;
+            break;
+          }
+        }
+
+        // If no date found → carry forward from previous block
+        if (!dateISO && lastDateISO) {
+          dateISO = lastDateISO;
+          dateStr = lastDateStr;
+        }
+
+        // Update carry-forward
+        if (dateISO) {
+          lastDateISO = dateISO;
+          lastDateStr = dateStr;
+        }
+
+        // ===== Parse time (line after "schedule", or standalone HH:MM) =====
+        var heureDebut = '';
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase() === 'schedule' && i + 1 < lines.length) {
+            var tmatch = lines[i + 1].match(/(\d{1,2})[h:](\d{2})/);
+            if (tmatch) {
+              heureDebut = (tmatch[1].length === 1 ? '0' + tmatch[1] : tmatch[1]) + ':' + tmatch[2];
+            }
+            break;
+          }
+        }
+        // Fallback: try any HH:MM line
+        if (!heureDebut) {
+          for (var i = 0; i < lines.length; i++) {
+            var tf = lines[i].match(/^(\d{1,2})[h:](\d{2})$/);
+            if (tf) {
+              heureDebut = (tf[1].length === 1 ? '0' + tf[1] : tf[1]) + ':' + tf[2];
+              break;
+            }
+          }
+        }
+
+        // ===== Parse CIS → lieu (fuzzy match) =====
+        var cisName = '';
+        for (var i = 0; i < lines.length; i++) {
+          var cisMatch = lines[i].match(/^CIS\s+(.+)/i);
+          if (cisMatch) {
+            cisName = cisMatch[1].trim();
+            break;
+          }
+        }
+        var detectedLieu = cisName ? findBestLieu(cisName) : '';
+
+        // A valid session needs at minimum a time or a CIS
+        if (!heureDebut && !cisName) return;
+
+        sessions.push({
+          nom: 'SSO ICP',
+          date: dateStr,
+          dateISO: dateISO,
+          heureDebut: heureDebut,
+          heureFin: '',
+          lieu: detectedLieu,
+          cisOriginal: cisName,
+          rawText: (dateStr + ' ' + heureDebut + ' — CIS ' + cisName).trim(),
+          exists: false
+        });
+      });
+
+      return sessions;
+    }
+
+    /* ===== PARSE: generic text format (fallback) ===== */
+    function parseGenericICP(text) {
+      var lines = text.split('\n');
+      var blocks = [];
+      var currentBlock = [];
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line === '') {
+          if (currentBlock.length > 0) { blocks.push(currentBlock.join('\n')); currentBlock = []; }
+        } else {
+          if (currentBlock.length > 0 && /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(line)) {
+            blocks.push(currentBlock.join('\n')); currentBlock = [];
+          }
+          currentBlock.push(line);
+        }
+      }
+      if (currentBlock.length > 0) blocks.push(currentBlock.join('\n'));
+      if (blocks.length <= 2 && lines.length > 3) {
+        var lb = lines.filter(function(l){ return l.trim() !== ''; }).map(function(l){ return l.trim(); });
+        if (lb.length > blocks.length) blocks = lb;
+      }
+
+      var sessions = [];
+      var dateRegex = /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/;
+
+      blocks.forEach(function(block) {
+        var upper = block.toUpperCase();
+        if (upper.indexOf('ICP') === -1) return;
+
+        var isEnAttente = /en\s*attente/i.test(block);
+        if (!isEnAttente) {
+          var ispAssigned = false;
+          var ispMatch = block.match(/ISP\s*[:=\-–]\s*(.+)/i);
+          if (ispMatch) {
+            var v = ispMatch[1].trim();
+            if (v && v.length > 2 && !/^(en\s*attente|non|aucun|néant|n\/a|none|vide|sans|\?|à\s*déf)/i.test(v)) ispAssigned = true;
+          }
+          if (!ispAssigned) {
+            var ispN = block.match(/ISP\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/i);
+            if (ispN && !/^(En\s*attente|Non|Aucun|Néant|Sans|Pas)/i.test(ispN[1])) ispAssigned = true;
+          }
+          if (ispAssigned) return;
+        }
+
+        var dateMatch = block.match(dateRegex);
+        var dateStr = '', dateISO = '';
+        if (dateMatch) {
+          var day = dateMatch[1].length === 1 ? '0' + dateMatch[1] : dateMatch[1];
+          var month = dateMatch[2].length === 1 ? '0' + dateMatch[2] : dateMatch[2];
+          var year = dateMatch[3]; if (year.length === 2) year = '20' + year;
+          dateStr = day + '/' + month + '/' + year;
+          dateISO = year + '-' + month + '-' + day;
+        }
+
+        var times = [];
+        var timeRx = /(\d{1,2})[h:](\d{2})/g; var tm;
+        while ((tm = timeRx.exec(block)) !== null) {
+          var hh = tm[1].length === 1 ? '0' + tm[1] : tm[1];
+          if (parseInt(hh) <= 23) times.push(hh + ':' + tm[2]);
+        }
+
+        var detectedLieu = '';
+        // Try CIS first
+        var cisM = block.match(/CIS\s+(.+)/i);
+        if (cisM) {
+          detectedLieu = findBestLieu(cisM[1].trim());
+        }
+        if (!detectedLieu) {
+          // Fallback: direct keyword match
+          Object.keys(LIEU_GROUPEMENT).forEach(function(lieu) {
+            if (block.toLowerCase().indexOf(lieu.toLowerCase()) !== -1 && lieu.length > detectedLieu.length) detectedLieu = lieu;
+          });
+        }
+
+        var sessionName = 'SSO ICP';
+        var icpM = block.match(/(SSO\s+ICP\s*\d*|ICP\s+\d+|ICP)/i);
+        if (icpM) { sessionName = icpM[0].replace(/\s+/g,' ').trim().toUpperCase(); }
+        if (sessionName === 'ICP') sessionName = 'SSO ICP';
+
+        sessions.push({
+          nom: sessionName,
+          date: dateStr, dateISO: dateISO,
+          heureDebut: times[0] || '',
+          heureFin: times[1] || '',
+          lieu: detectedLieu, cisOriginal: '',
+          rawText: block.substring(0,200).replace(/\n/g,' '),
+          exists: false
+        });
+      });
+      return sessions;
+    }
+
+    function parseScraper() {
+      var text = document.getElementById('scraperTextarea').value.trim();
+      if (!text) { showToast("Collez d'abord le contenu de la page.", "error"); return; }
+
+      var sessions = [];
+
+      // Format 1: Structured ICP page (how_to_reg / S'inscrire / CIS / medical_services)
+      if (/how_to_reg|S'inscrire|CIS\s/i.test(text)) {
+        sessions = parseStructuredICP(text);
+      }
+
+      // Format 2: Generic text with ICP mentions (fallback)
+      if (sessions.length === 0) {
+        sessions = parseGenericICP(text);
+      }
+
+      if (sessions.length === 0) {
+        showToast("Aucune session ICP sans ISP détectée.", "info");
+        document.getElementById('scraperResults').innerHTML =
+          '<div class="empty-state" style="padding:24px;"><div class="icon">🔍</div><p>Aucune session ICP sans ISP trouvée dans le texte collé.</p></div>';
+        return;
+      }
+
+      // Check existence on server (date + heure + lieu)
+      showToast("Vérification des doublons...", "info");
+      var checkList = sessions.map(function(s) {
+        return { nom: s.nom, date: s.dateISO, heureDebut: s.heureDebut, lieu: s.lieu, type: 'SSO ICP' };
+      });
+
+      google.script.run
+        .withSuccessHandler(function(existsFlags) {
+          for (var k = 0; k < sessions.length; k++) {
+            sessions[k].exists = (existsFlags && existsFlags[k]) || false;
+          }
+          scraperSessions = sessions;
+          renderScraperTiles();
+        })
+        .withFailureHandler(function() {
+          scraperSessions = sessions;
+          renderScraperTiles();
+        })
+        .checkEventsExistence(checkList);
+    }
+
+    function renderScraperTiles() {
+      var container = document.getElementById('scraperResults');
+      var total = scraperSessions.length;
+      var existsCount = scraperSessions.filter(function(s) { return s.exists; }).length;
+      var newCount = total - existsCount;
+
+      var html = '';
+
+      // Stats bar
+      html += '<div class="scraper-stats">';
+      html += '  <span>🔍 <strong>' + total + '</strong> session(s) ICP sans ISP</span>';
+      if (existsCount > 0) html += '  <span>✅ <strong>' + existsCount + '</strong> existe(nt) déjà</span>';
+      html += '  <span>🆕 <strong>' + newCount + '</strong> nouvelle(s) à créer</span>';
+      html += '</div>';
+
+      if (newCount > 0) {
+        html += '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">';
+        html += '  <button class="btn btn-outline btn-sm" onclick="scraperSelectAll(true)">☑️ Tout cocher</button>';
+        html += '  <button class="btn btn-outline btn-sm" onclick="scraperSelectAll(false)">⬜ Tout décocher</button>';
+        html += '</div>';
+      }
+
+      // Tiles
+      html += '<div class="scraper-tiles">';
+
+      scraperSessions.forEach(function(s, idx) {
+        var cls = s.exists ? 'scraper-tile exists' : 'scraper-tile';
+        html += '<div class="' + cls + '" onclick="toggleScraperTile(this, ' + idx + ')">';
+        html += '  <input type="checkbox" data-index="' + idx + '"' + (s.exists ? ' disabled' : '') + '>';
+        html += '  <div class="scraper-tile-info">';
+        html += '    <div class="scraper-tile-title">' + esc(s.nom);
+        if (s.date) html += ' — <span style="color:var(--primary);font-weight:700;">' + esc(s.date) + '</span>';
+        if (s.heureDebut) html += ' à <span style="color:var(--primary);">' + esc(s.heureDebut) + '</span>';
+        html += '</div>';
+        html += '    <div class="scraper-tile-details">';
+        html += '      📅 <input class="edit-field" type="date" data-field="date" data-index="' + idx + '" value="' + s.dateISO + '" onclick="event.stopPropagation()" style="width:145px;">';
+        html += '      🕐 <input class="edit-field" type="time" data-field="debut" data-index="' + idx + '" value="' + s.heureDebut + '" onclick="event.stopPropagation()" style="width:90px;">';
+        html += '      → <input class="edit-field" type="time" data-field="fin" data-index="' + idx + '" value="' + (s.heureFin || '') + '" onclick="event.stopPropagation()" style="width:90px;" placeholder="(opt)">';
+        html += '      📍 <select class="edit-field" data-field="lieu" data-index="' + idx + '" onclick="event.stopPropagation()" style="width:180px;">';
+        html += '        <option value="">-- Lieu --</option>';
+        Object.keys(LIEU_GROUPEMENT).sort().forEach(function(lieu) {
+          html += '<option value="' + lieu + '"' + (s.lieu === lieu ? ' selected' : '') + '>' + lieu + '</option>';
+        });
+        html += '      </select>';
+        if (s.cisOriginal && !s.lieu) {
+          html += '      <span style="color:var(--danger);font-size:0.78rem;">⚠ CIS "' + esc(s.cisOriginal) + '" non reconnu</span>';
+        } else if (s.cisOriginal && s.lieu) {
+          html += '      <span style="color:var(--success);font-size:0.78rem;">✓ ' + esc(s.cisOriginal) + '</span>';
+        }
+        html += '    </div>';
+        if (s.rawText) {
+          html += '    <div class="scraper-raw">📄 ' + esc(s.rawText) + '</div>';
+        }
+        html += '  </div>';
+        if (s.exists) {
+          html += '  <span class="scraper-tile-badge exists-badge">✅ Existe</span>';
+        } else {
+          html += '  <span class="scraper-tile-badge warning">⚠️ Sans ISP</span>';
+        }
+        html += '</div>';
+      });
+
+      html += '</div>';
+
+      if (newCount > 0) {
+        html += '<button class="btn btn-success btn-block" style="margin-top:20px;" onclick="createScraperEvents()">🚀 Créer les événements sélectionnés</button>';
+      }
+
+      container.innerHTML = html;
+      showToast(total + " session(s) trouvée(s), " + newCount + " nouvelle(s).", "info");
+    }
+
+    function toggleScraperTile(el, idx) {
+      if (scraperSessions[idx].exists) return;
+      var cb = el.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      el.classList.toggle('selected', cb.checked);
+    }
+
+    function scraperSelectAll(state) {
+      scraperSessions.forEach(function(s, idx) {
+        if (s.exists) return;
+        var cb = document.querySelector('.scraper-tile input[data-index="' + idx + '"]');
+        if (cb) {
+          cb.checked = state;
+          cb.closest('.scraper-tile').classList.toggle('selected', state);
+        }
+      });
+    }
+
+    function createScraperEvents() {
+      var checkboxes = document.querySelectorAll('.scraper-tile input[type="checkbox"]:checked');
+      if (checkboxes.length === 0) {
+        showToast("Cochez au moins une session à créer.", "error");
+        return;
+      }
+
+      var eventsToCreate = [];
+      var valid = true;
+
+      checkboxes.forEach(function(cb) {
+        var idx = parseInt(cb.getAttribute('data-index'));
+        var s = scraperSessions[idx];
+
+        var dateInput = document.querySelector('.edit-field[data-field="date"][data-index="' + idx + '"]');
+        var debutInput = document.querySelector('.edit-field[data-field="debut"][data-index="' + idx + '"]');
+        var finInput = document.querySelector('.edit-field[data-field="fin"][data-index="' + idx + '"]');
+        var lieuSelect = document.querySelector('.edit-field[data-field="lieu"][data-index="' + idx + '"]');
+
+        var date = dateInput ? dateInput.value : s.dateISO;
+        var debut = debutInput ? debutInput.value : s.heureDebut;
+        var fin = finInput ? finInput.value : s.heureFin;
+        var lieu = lieuSelect ? lieuSelect.value : s.lieu;
+
+        if (!date) { valid = false; return; }
+        if (!lieu) { valid = false; return; }
+
+        eventsToCreate.push({
+          nom: s.nom,
+          date: date,
+          heureDebut: debut,
+          heureFin: fin,
+          lieu: lieu,
+          commentaire: 'ICP sans ISP — créé via scraper',
+          places: 1,
+          type: 'SSO ICP'
+        });
+      });
+
+      if (!valid) {
+        showToast("Certains événements n'ont pas de date ou de lieu. Complétez les champs.", "error");
+        return;
+      }
+
+      if (!confirm("Créer " + eventsToCreate.length + " événement(s) SSO ICP ?\n\nLes abonnés seront notifiés par mail.")) return;
+
+      showToast("Création en cours (" + eventsToCreate.length + " événements)...", "info");
+
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            showToast("✅ " + r.created + "/" + r.total + " événement(s) créé(s) !", "success");
+            closeModal('modalScraper');
+            loadEvents(renderAdminEvents);
+          } else {
+            showToast("Erreur lors de la création.", "error");
+          }
+        })
+        .withFailureHandler(function(err) {
+          showToast("Erreur : " + err.message, "error");
+        })
+        .createEventsBatch(eventsToCreate);
+    }
+
+    /* ===== DROPDOWNS ===== */
+    function populateDropdowns() {
+      var candSel = document.getElementById('candidaterSelect');
+      candSel.innerHTML = '<option value="">-- Choisissez votre nom --</option>';
+      agentsList.forEach(function(agent) {
+        var opt = document.createElement('option');
+        opt.value = agent.nom;
+        opt.textContent = agent.nom;
+        candSel.appendChild(opt);
+      });
+
+      var notifSel = document.getElementById('notifSelect');
+      notifSel.innerHTML = '<option value="">-- Choisissez votre nom --</option>';
+      agentsList.forEach(function(agent) {
+        var opt = document.createElement('option');
+        opt.value = agent.nom;
+        opt.textContent = agent.nom + (agent.notif ? ' 🔔' : '');
+        opt.setAttribute('data-notif', agent.notif ? 'true' : 'false');
+        notifSel.appendChild(opt);
+      });
+    }
+
+    /* ===== MODAL HELPERS ===== */
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function closeIfOverlay(event, el) { if (event.target === el) el.classList.remove('active'); }
+
+    /* ===== TOAST ===== */
+    function showToast(msg, type) {
+      var toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast ' + (type || 'info') + ' show';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function() { toast.classList.remove('show'); }, 4000);
+    }
+
+    /* ===== UTILS ===== */
+    function esc(str) {
+      var d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
