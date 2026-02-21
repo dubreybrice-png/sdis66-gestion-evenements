@@ -7,7 +7,7 @@ const SS_ID = "19aTCFsHGl3NVOvG98-xUhXZ3aAIoVDvCCoIr8FJ3Y2w";
 const SHEET_EVENTS  = "Feuille 1";
 const SHEET_LISTING = "Listing";
 const SHEET_SCORING = "Scoring";
-const ADMIN_PWD     = "Sdis66!";
+const ADMIN_PWD     = "0007";
 
 /* ========== WEBAPP ========== */
 function doGet(e) {
