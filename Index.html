@@ -646,6 +646,102 @@
       margin-top: 4px; font-size: 0.72rem; color: #aaa; font-style: italic;
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+
+    /* ===== BANDEAU FMPA ===== */
+    .fmpa-banner {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      border-bottom: 2px solid #a5d6a7;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .fmpa-banner:hover {
+      background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+    }
+    .fmpa-banner .fmpa-icon { font-size: 1.3rem; }
+    .fmpa-banner .fmpa-text {
+      font-size: 0.9rem; font-weight: 600; color: #2e7d32;
+    }
+    .fmpa-banner .fmpa-arrow {
+      font-size: 0.75rem; color: #43a047; transition: transform 0.2s;
+    }
+    .fmpa-banner.open .fmpa-arrow { transform: rotate(180deg); }
+    .fmpa-banner.hidden { display: none; }
+
+    /* ===== POPUP FMPA ===== */
+    .fmpa-popup-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1500;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding-top: 80px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+      backdrop-filter: blur(4px);
+    }
+    .fmpa-popup-overlay.active { opacity: 1; pointer-events: all; }
+    .fmpa-popup {
+      background: white; border-radius: 18px;
+      padding: 24px 28px; max-width: 650px; width: 94%;
+      max-height: 80vh; overflow-y: auto;
+      transform: translateY(-20px);
+      transition: transform 0.3s;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .fmpa-popup-overlay.active .fmpa-popup { transform: translateY(0); }
+    .fmpa-popup h2 {
+      font-size: 1.15rem; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+      color: #2e7d32;
+    }
+    .fmpa-popup .close-btn {
+      margin-left: auto; background: none; border: none;
+      font-size: 1.5rem; cursor: pointer; color: var(--text-light);
+      padding: 4px 10px; border-radius: 8px; transition: background 0.2s;
+    }
+    .fmpa-popup .close-btn:hover { background: #f0f0f0; }
+
+    .fmpa-session {
+      border: 2px solid #e0e0e0; border-radius: 14px;
+      padding: 16px 18px; margin-bottom: 14px;
+      border-left: 6px solid #43a047;
+      transition: box-shadow 0.2s;
+    }
+    .fmpa-session:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .fmpa-session-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .fmpa-session-type {
+      background: #e8f5e9; color: #2e7d32;
+      padding: 4px 14px; border-radius: 20px;
+      font-size: 0.82rem; font-weight: 700;
+    }
+    .fmpa-session-type.fmpa2 {
+      background: #e3f2fd; color: #1565c0;
+    }
+    .fmpa-session-date {
+      font-weight: 700; font-size: 0.95rem; color: var(--primary);
+    }
+    .fmpa-session-horaires {
+      font-size: 0.85rem; color: var(--text-light);
+    }
+    .fmpa-session-people {
+      margin-top: 8px; font-size: 0.82rem; color: var(--text);
+      line-height: 1.7;
+    }
+    .fmpa-session-people strong {
+      display: inline-block; min-width: 100px;
+    }
+
+    body.mobile-mode .fmpa-banner { padding: 14px 16px; }
+    body.mobile-mode .fmpa-banner .fmpa-text { font-size: 1rem; }
+    body.mobile-mode .fmpa-popup { width: 100%; max-width: 100%; border-radius: 0; max-height: 100vh; }
+    body.mobile-mode .fmpa-popup-overlay { padding-top: 0; align-items: flex-start; }
   </style>
 </head>
 <body>
@@ -678,6 +774,21 @@
   <div class="header">
     <h1>🚒 SDIS 66 — Événements</h1>
     <p>Gestion des événements et candidatures</p>
+  </div>
+
+  <!-- ===== BANDEAU FMPA ===== -->
+  <div id="fmpaBanner" class="fmpa-banner hidden" onclick="toggleFmpaPopup()">
+    <span class="fmpa-icon">📋</span>
+    <span class="fmpa-text" id="fmpaBannerText">Prochaines FMPA</span>
+    <span class="fmpa-arrow">▼</span>
+  </div>
+
+  <!-- ===== POPUP FMPA ===== -->
+  <div id="fmpaPopupOverlay" class="fmpa-popup-overlay" onclick="if(event.target===this)closeFmpaPopup()">
+    <div class="fmpa-popup">
+      <h2>📋 Prochaines FMPA <button class="close-btn" onclick="closeFmpaPopup()">&times;</button></h2>
+      <div id="fmpaContent"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
   </div>
 
   <div class="container">
@@ -1076,6 +1187,7 @@
     /* ===== INIT ===== */
     window.onload = function() {
       populateTimeSelects();
+      loadFmpa();
       loadEvents(function() {
         // Deep-link: ?candidater=eventId → auto-open candidature modal
         if (DEEP_LINK_EVENT_ID) {
@@ -2209,6 +2321,77 @@
       toast.className = 'toast ' + (type || 'info') + ' show';
       clearTimeout(toast._t);
       toast._t = setTimeout(function() { toast.classList.remove('show'); }, 4000);
+    }
+
+    /* ===== FMPA: BANDEAU + POPUP ===== */
+    var fmpaData = [];
+
+    function loadFmpa() {
+      google.script.run
+        .withSuccessHandler(function(sessions) {
+          fmpaData = sessions || [];
+          var banner = document.getElementById('fmpaBanner');
+          if (fmpaData.length > 0) {
+            banner.classList.remove('hidden');
+            var nextDate = fmpaData[0].date;
+            var nextType = fmpaData[0].type;
+            document.getElementById('fmpaBannerText').textContent =
+              '📋 Prochaines FMPA — ' + fmpaData.length + ' session(s) à venir  •  Prochaine : ' + nextType + ' le ' + nextDate + '  — Cliquez pour voir le détail';
+          } else {
+            banner.classList.add('hidden');
+          }
+        })
+        .withFailureHandler(function() {})
+        .getFmpaData();
+    }
+
+    function toggleFmpaPopup() {
+      var overlay = document.getElementById('fmpaPopupOverlay');
+      var banner = document.getElementById('fmpaBanner');
+      if (overlay.classList.contains('active')) {
+        closeFmpaPopup();
+      } else {
+        overlay.classList.add('active');
+        banner.classList.add('open');
+        renderFmpaContent();
+      }
+    }
+
+    function closeFmpaPopup() {
+      document.getElementById('fmpaPopupOverlay').classList.remove('active');
+      document.getElementById('fmpaBanner').classList.remove('open');
+    }
+
+    function renderFmpaContent() {
+      var container = document.getElementById('fmpaContent');
+      if (fmpaData.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Aucune FMPA à venir.</p></div>';
+        return;
+      }
+
+      var html = '';
+      fmpaData.forEach(function(s) {
+        var typeClass = s.type === 'FMPA 2' ? 'fmpa2' : '';
+        html += '<div class="fmpa-session">';
+        html += '  <div class="fmpa-session-header">';
+        html += '    <span class="fmpa-session-type ' + typeClass + '">' + esc(s.type) + '</span>';
+        html += '    <span class="fmpa-session-date">📅 ' + esc(s.date) + '</span>';
+        if (s.horaires) {
+          html += '    <span class="fmpa-session-horaires">🕐 ' + esc(s.horaires) + '</span>';
+        }
+        html += '  </div>';
+        html += '  <div class="fmpa-session-people">';
+        if (s.apprenants.length > 0) {
+          html += '    <div><strong>👨‍🎓 Apprenants :</strong> ' + s.apprenants.map(function(n){ return esc(n); }).join(', ') + '</div>';
+        }
+        if (s.formateurs.length > 0) {
+          html += '    <div style="margin-top:4px;"><strong>👨‍🏫 Formateurs :</strong> ' + s.formateurs.map(function(n){ return esc(n); }).join(', ') + '</div>';
+        }
+        html += '  </div>';
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
     }
 
     /* ===== UTILS ===== */

@@ -593,6 +593,98 @@ function getCandidateScores() {
   return scores;
 }
 
+/* ========== FMPA (consultation) ========== */
+
+/** Récupère les prochaines sessions FMPA depuis le spreadsheet Confirmation */
+function getFmpaData() {
+  var FMPA_SS_ID = "1hmLYGOcu0tt1y4Cg9GIquGM1QVua3Hi37pcacPZrW4Q";
+  var FMPA_SHEET = "Confirmation";
+
+  var ss = SpreadsheetApp.openById(FMPA_SS_ID);
+  var sh = ss.getSheetByName(FMPA_SHEET);
+  if (!sh) return [];
+
+  var lastCol = sh.getLastColumn();
+  if (lastCol < 1) return [];
+
+  // Ligne 1 = dates, Ligne 2 = titres, Lignes 3-15 = apprenants, Lignes 18-20 = formateurs
+  var dates    = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  var titres   = sh.getRange(2, 1, 1, lastCol).getValues()[0];
+  var apprenants = sh.getRange(3, 1, 13, lastCol).getValues(); // lignes 3 à 15
+  var formateurs = sh.getRange(18, 1, 3, lastCol).getValues(); // lignes 18 à 20
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  var sessions = [];
+
+  for (var col = 0; col < lastCol; col++) {
+    var dateVal = dates[col];
+    var titreVal = String(titres[col] || "").trim();
+
+    // Ignorer les colonnes sans date
+    if (!dateVal) continue;
+    var dateObj = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
+    if (isNaN(dateObj.getTime())) continue;
+    dateObj.setHours(0, 0, 0, 0);
+
+    // Ignorer les FMPA passées
+    if (dateObj < today) continue;
+
+    // Déterminer le type FMPA
+    var typeFmpa = "";
+    if (/xabcde/i.test(titreVal)) {
+      typeFmpa = "FMPA 1";
+    } else if (/sso.*pisu|pisu.*sso/i.test(titreVal)) {
+      typeFmpa = "FMPA 2";
+    } else {
+      typeFmpa = titreVal || "FMPA";
+    }
+
+    // Déterminer les horaires (AM = après-midi, M = matin)
+    var horaires = "";
+    // Chercher AM/M dans le titre. Attention: AM doit être testé avant M
+    if (/\bAM\b/.test(titreVal)) {
+      horaires = "13h30 – 17h30";
+    } else if (/\bM\b/.test(titreVal)) {
+      horaires = "8h30 – 12h30";
+    }
+
+    // Si FMPA 1 (XABCDE) = toute la journée
+    if (typeFmpa === "FMPA 1") {
+      horaires = "Journée entière";
+    }
+
+    // Récupérer les noms des apprenants (lignes 3-15)
+    var noms = [];
+    for (var r = 0; r < 13; r++) {
+      var nom = String(apprenants[r][col] || "").trim();
+      if (nom) noms.push(nom);
+    }
+
+    // Récupérer les formateurs (lignes 18-20)
+    var formList = [];
+    for (var r = 0; r < 3; r++) {
+      var form = String(formateurs[r][col] || "").trim();
+      if (form) formList.push(form);
+    }
+
+    sessions.push({
+      date: formatDate_(dateObj),
+      dateRaw: dateObj.getTime(),
+      type: typeFmpa,
+      horaires: horaires,
+      apprenants: noms,
+      formateurs: formList
+    });
+  }
+
+  // Tri par date croissante
+  sessions.sort(function(a, b) { return a.dateRaw - b.dateRaw; });
+
+  return sessions;
+}
+
 /* ========== SCRAPER HELPERS ========== */
 
 /** Vérifie si des événements existent déjà (pour le scraper)
