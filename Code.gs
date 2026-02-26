@@ -652,7 +652,7 @@ function getFmpaData() {
 
     // Si FMPA 1 (XABCDE) = toute la journée
     if (typeFmpa === "FMPA 1") {
-      horaires = "Journée entière";
+      horaires = "8h30 – 17h30";
     }
 
     // Récupérer les noms des apprenants (lignes 3-15)
