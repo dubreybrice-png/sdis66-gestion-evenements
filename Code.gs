@@ -611,8 +611,8 @@ function getFmpaData() {
   // Ligne 2 = thème (XABCDE, SSO + PISU, SSO + Carrefour Technique)
   // Lignes 3-15 = apprenants
   // Lignes 18-21 = formateurs
-  var dates      = sh.getRange(1, 1, 1, lastCol).getValues()[0];
-  var titres     = sh.getRange(2, 1, 1, lastCol).getValues()[0];
+  var dates      = sh.getRange(1, 1, 1, lastCol).getDisplayValues()[0]; // getDisplayValues pour avoir le texte exact
+  var titres     = sh.getRange(2, 1, 1, lastCol).getDisplayValues()[0];
   var apprenants = sh.getRange(3, 1, 13, lastCol).getValues(); // lignes 3 à 15
   var formateurs = sh.getRange(18, 1, 4, lastCol).getValues(); // lignes 18 à 21
 
