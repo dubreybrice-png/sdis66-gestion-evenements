@@ -605,54 +605,67 @@ function getFmpaData() {
   if (!sh) return [];
 
   var lastCol = sh.getLastColumn();
-  if (lastCol < 1) return [];
+  if (lastCol < 2) return []; // col A = labels, données à partir de col B
 
-  // Ligne 1 = dates, Ligne 2 = titres, Lignes 3-15 = apprenants, Lignes 18-20 = formateurs
-  var dates    = sh.getRange(1, 1, 1, lastCol).getValues()[0];
-  var titres   = sh.getRange(2, 1, 1, lastCol).getValues()[0];
+  // Ligne 1 = dates (texte: "06/01/2026", "12/01/2026 M", "03/02/2026 AM", "17/01/2026 Matin")
+  // Ligne 2 = thème (XABCDE, SSO + PISU, SSO + Carrefour Technique)
+  // Lignes 3-15 = apprenants
+  // Lignes 18-21 = formateurs
+  var dates      = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  var titres     = sh.getRange(2, 1, 1, lastCol).getValues()[0];
   var apprenants = sh.getRange(3, 1, 13, lastCol).getValues(); // lignes 3 à 15
-  var formateurs = sh.getRange(18, 1, 3, lastCol).getValues(); // lignes 18 à 20
+  var formateurs = sh.getRange(18, 1, 4, lastCol).getValues(); // lignes 18 à 21
 
   var today = new Date();
   today.setHours(0, 0, 0, 0);
 
   var sessions = [];
 
-  for (var col = 0; col < lastCol; col++) {
-    var dateVal = dates[col];
+  // Commencer à col index 1 (col B) car col A = labels
+  for (var col = 1; col < lastCol; col++) {
+    var dateStr = String(dates[col] || "").trim();
     var titreVal = String(titres[col] || "").trim();
 
-    // Ignorer les colonnes sans date
-    if (!dateVal) continue;
-    var dateObj = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
-    if (isNaN(dateObj.getTime())) continue;
+    if (!dateStr) continue;
+
+    // Parser la date depuis le texte: "06/01/2026" ou "12/01/2026 M" ou "03/02/2026 AM" ou "17/01/2026 Matin"
+    var dateMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!dateMatch) continue;
+
+    var day = parseInt(dateMatch[1], 10);
+    var month = parseInt(dateMatch[2], 10) - 1; // mois 0-indexé
+    var year = parseInt(dateMatch[3], 10);
+    var dateObj = new Date(year, month, day);
     dateObj.setHours(0, 0, 0, 0);
 
     // Ignorer les FMPA passées
     if (dateObj < today) continue;
 
-    // Déterminer le type FMPA
+    // Déterminer les horaires depuis la ligne 1 (suffixe après la date)
+    var horaires = "";
+    var afterDate = dateStr.replace(/\d{2}\/\d{2}\/\d{4}/, "").trim();
+    if (/^AM$/i.test(afterDate)) {
+      horaires = "13h30 – 17h30";
+    } else if (/^M$|^Matin$/i.test(afterDate)) {
+      horaires = "8h30 – 12h30";
+    }
+
+    // Déterminer le type FMPA depuis ligne 2
     var typeFmpa = "";
     if (/xabcde/i.test(titreVal)) {
       typeFmpa = "FMPA 1";
+      if (!horaires) horaires = "8h30 – 17h30"; // journée entière par défaut
     } else if (/sso.*pisu|pisu.*sso/i.test(titreVal)) {
       typeFmpa = "FMPA 2";
+    } else if (/sso.*carrefour|carrefour.*technique/i.test(titreVal)) {
+      typeFmpa = "FMPA 2 (Carrefour Technique)";
     } else {
       typeFmpa = titreVal || "FMPA";
     }
 
-    // Déterminer les horaires (AM = après-midi, M = matin)
-    var horaires = "";
-    // Chercher AM/M dans le titre. Attention: AM doit être testé avant M
-    if (/\bAM\b/.test(titreVal)) {
-      horaires = "13h30 – 17h30";
-    } else if (/\bM\b/.test(titreVal)) {
+    // Horaires depuis le thème ligne 2 (ex: "SSO + PISU M" = matin)
+    if (!horaires && /\bM\b/.test(titreVal) && !/Matin/i.test(afterDate)) {
       horaires = "8h30 – 12h30";
-    }
-
-    // Si FMPA 1 (XABCDE) = toute la journée
-    if (typeFmpa === "FMPA 1") {
-      horaires = "8h30 – 17h30";
     }
 
     // Récupérer les noms des apprenants (lignes 3-15)
@@ -662,9 +675,9 @@ function getFmpaData() {
       if (nom) noms.push(nom);
     }
 
-    // Récupérer les formateurs (lignes 18-20)
+    // Récupérer les formateurs (lignes 18-21)
     var formList = [];
-    for (var r = 0; r < 3; r++) {
+    for (var r = 0; r < 4; r++) {
       var form = String(formateurs[r][col] || "").trim();
       if (form) formList.push(form);
     }
