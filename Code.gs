@@ -633,6 +633,27 @@ function getCandidateScores() {
   return scores;
 }
 
+/** Retourne les données de scoring de tous les agents pour affichage */
+function getScoresData() {
+  var agents = getAgentsList();
+  var scores = getCandidateScores();
+  var result = [];
+  for (var i = 0; i < agents.length; i++) {
+    var nom = agents[i].nom;
+    var s = scores[nom] || { postulations: 0, selections: 0, score: 0 };
+    var ratio = s.postulations > 0 ? Math.round(s.selections / s.postulations * 100) : 0;
+    result.push({
+      nom: nom,
+      postulations: s.postulations,
+      selections: s.selections,
+      ratio: ratio,
+      score: s.score
+    });
+  }
+  result.sort(function(a, b) { return b.postulations - a.postulations; });
+  return result;
+}
+
 /* ========== FMPA (consultation) ========== */
 
 /** Récupère les prochaines sessions FMPA depuis le spreadsheet Confirmation */

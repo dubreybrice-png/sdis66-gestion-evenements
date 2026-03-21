@@ -329,6 +329,20 @@
     .admin-toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .admin-toolbar-right { font-size: 0.85rem; color: var(--text-light); }
 
+    .scores-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .scores-table th { background:var(--primary); color:white; padding:10px 14px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; position:relative; }
+    .scores-table th:hover { background:var(--primary-dark); }
+    .scores-table th .sort-arrow { margin-left:6px; font-size:0.7em; opacity:0.6; }
+    .scores-table th.sorted .sort-arrow { opacity:1; }
+    .scores-table td { padding:8px 14px; border-bottom:1px solid var(--border); }
+    .scores-table tbody tr:hover { background:var(--primary-light); }
+    .scores-table tbody tr:nth-child(even) { background:#f8f9fa; }
+    .scores-table tbody tr:nth-child(even):hover { background:var(--primary-light); }
+    .scores-ratio { display:inline-block; padding:2px 10px; border-radius:12px; font-weight:600; font-size:0.8rem; }
+    .scores-ratio.high { background:#e8f5e9; color:var(--success); }
+    .scores-ratio.mid { background:#fff3e0; color:#e65100; }
+    .scores-ratio.low { background:#ffebee; color:var(--danger); }
+
     /* ===== MOBILE TOUCH ===== */
     html {
       -webkit-text-size-adjust: 100%;
@@ -897,11 +911,23 @@
           <button id="btnGrpOuest" class="btn-grp" onclick="setGroupementFilter('Ouest')">📍 Groupement Ouest</button>
           <button id="btnGrpSud" class="btn-grp" onclick="setGroupementFilter('Sud')">📍 Groupement Sud</button>
           <button class="btn btn-warning" onclick="openScraper()" style="margin-left:8px;">📋 Scraper ICP</button>
+          <button class="btn btn-outline" onclick="openScoresModal()" style="margin-left:8px;">🏆 Voir les scores</button>
         </div>
         <div class="admin-toolbar-right" id="adminEventCount"></div>
       </div>
       <div id="adminEventsContainer">
         <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Scores -->
+  <div id="modalScores" class="modal-overlay" onclick="closeIfOverlay(event, this)">
+    <div class="modal modal-wide">
+      <h2>🏆 Scores des agents <button class="close-btn" onclick="closeModal('modalScores')">&times;</button></h2>
+      <p style="margin-bottom:16px;color:var(--text-light);font-size:0.85rem;line-height:1.5;">Classement basé sur les candidatures et sélections. Le score augmente à chaque candidature et se remet à 0 quand l'agent est sélectionné (sauf s'il était seul candidat).</p>
+      <div id="scoresContent">
+        <div class="loading"><div class="spinner"></div><p>Chargement des scores...</p></div>
       </div>
     </div>
   </div>
@@ -1529,7 +1555,7 @@
         html += '  <div style="margin-top:10px;">' + getStatusTag(evt) + '</div>';
 
         // Candidats list with remove buttons
-        if (evt.candidats.length > 0 && evt.statut !== 'cloturé') {
+        if (evt.candidats.length > 0) {
           html += '  <div style="margin-top:10px; padding:10px 14px; background:#fff3e0; border-radius:10px; font-size:0.85rem;">';
           html += '    <strong style="display:block;margin-bottom:6px;">📝 Candidats :</strong>';
           evt.candidats.forEach(function(nom) {
@@ -2426,6 +2452,89 @@
     }
 
     /* ===== UTILS ===== */
+    /* ===== SCORES MODAL ===== */
+    var _scoresData = null;
+    var _scoresSortCol = 'postulations';
+    var _scoresSortAsc = false;
+
+    function openScoresModal() {
+      openModal('modalScores');
+      document.getElementById('scoresContent').innerHTML = '<div class="loading"><div class="spinner"></div><p>Chargement des scores...</p></div>';
+      google.script.run
+        .withSuccessHandler(function(data) {
+          _scoresData = data;
+          _scoresSortCol = 'postulations';
+          _scoresSortAsc = false;
+          renderScoresTable();
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('scoresContent').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Erreur : ' + esc(err.message || String(err)) + '</p></div>';
+        })
+        .getScoresData();
+    }
+
+    function sortScores(col) {
+      if (_scoresSortCol === col) {
+        _scoresSortAsc = !_scoresSortAsc;
+      } else {
+        _scoresSortCol = col;
+        _scoresSortAsc = col === 'nom';
+      }
+      renderScoresTable();
+    }
+
+    function renderScoresTable() {
+      if (!_scoresData || _scoresData.length === 0) {
+        document.getElementById('scoresContent').innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Aucune donnée de scoring disponible.</p></div>';
+        return;
+      }
+
+      var data = _scoresData.slice();
+      var col = _scoresSortCol;
+      var asc = _scoresSortAsc;
+      data.sort(function(a, b) {
+        var va = a[col], vb = b[col];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return asc ? -1 : 1;
+        if (va > vb) return asc ? 1 : -1;
+        return 0;
+      });
+
+      var arrow = function(c) {
+        var cls = c === col ? ' sorted' : '';
+        var sym = c === col ? (asc ? '▲' : '▼') : '⇅';
+        return '<span class="sort-arrow">' + sym + '</span>';
+      };
+
+      var h = '<table class="scores-table">';
+      h += '<thead><tr>';
+      h += '<th class="' + (col==='nom'?'sorted':'') + '" onclick="sortScores(\'nom\')">#</th>';
+      h += '<th class="' + (col==='nom'?'sorted':'') + '" onclick="sortScores(\'nom\')">Agent ' + arrow('nom') + '</th>';
+      h += '<th class="' + (col==='postulations'?'sorted':'') + '" onclick="sortScores(\'postulations\')">Candidatures ' + arrow('postulations') + '</th>';
+      h += '<th class="' + (col==='selections'?'sorted':'') + '" onclick="sortScores(\'selections\')">Sélections ' + arrow('selections') + '</th>';
+      h += '<th class="' + (col==='ratio'?'sorted':'') + '" onclick="sortScores(\'ratio\')">Ratio ' + arrow('ratio') + '</th>';
+      h += '<th class="' + (col==='score'?'sorted':'') + '" onclick="sortScores(\'score\')">Score ' + arrow('score') + '</th>';
+      h += '</tr></thead><tbody>';
+
+      for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        var ratioClass = d.ratio >= 50 ? 'high' : (d.ratio >= 25 ? 'mid' : 'low');
+        if (d.postulations === 0) ratioClass = 'low';
+        h += '<tr>';
+        h += '<td style="color:var(--text-light);font-weight:600;">' + (i + 1) + '</td>';
+        h += '<td style="font-weight:600;">' + esc(d.nom) + '</td>';
+        h += '<td>' + d.postulations + '</td>';
+        h += '<td>' + d.selections + '</td>';
+        h += '<td><span class="scores-ratio ' + ratioClass + '">' + d.ratio + '%</span></td>';
+        h += '<td style="font-weight:700;color:var(--primary);">' + d.score + '</td>';
+        h += '</tr>';
+      }
+      h += '</tbody></table>';
+
+      document.getElementById('scoresContent').innerHTML = h;
+    }
+
     function esc(str) {
       var d = document.createElement('div');
       d.textContent = str || '';
