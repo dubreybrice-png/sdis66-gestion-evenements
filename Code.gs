@@ -222,6 +222,46 @@ function postuler(eventId, agentNom) {
   return { success: false, message: "Événement non trouvé" };
 }
 
+/** Admin retire un candidat d'un événement */
+function removeCandidat(eventId, agentNom) {
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var sh = ss.getSheetByName(SHEET_EVENTS);
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return { success: false, message: "Aucun événement" };
+
+  var data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0]) !== String(eventId)) continue;
+
+    var candidatsStr = String(data[i][8] || "");
+    var candidats = candidatsStr ? candidatsStr.split(",").map(function(s){ return s.trim(); }).filter(function(s){ return s; }) : [];
+    var idx = candidats.indexOf(agentNom);
+    if (idx === -1) return { success: false, message: "Cet agent n'est pas candidat." };
+
+    candidats.splice(idx, 1);
+    sh.getRange(i + 2, 9).setValue(candidats.join(", "));
+
+    // Si l'agent était aussi retenu, le retirer des retenus
+    var retenusStr = String(data[i][9] || "");
+    var retenus = retenusStr ? retenusStr.split(",").map(function(s){ return s.trim(); }).filter(function(s){ return s; }) : [];
+    var rIdx = retenus.indexOf(agentNom);
+    if (rIdx !== -1) {
+      retenus.splice(rIdx, 1);
+      sh.getRange(i + 2, 10).setValue(retenus.join(", "));
+    }
+
+    // Si plus aucun candidat ni retenu, remettre le statut à "ouvert"
+    if (candidats.length === 0 && retenus.length <= 0) {
+      sh.getRange(i + 2, 10).setValue("");
+      sh.getRange(i + 2, 11).setValue("ouvert");
+    }
+
+    updateScoring();
+    return { success: true, message: "Candidat retiré.", remaining: candidats.length };
+  }
+  return { success: false, message: "Événement non trouvé" };
+}
+
 /** Admin sélectionne les candidats retenus → emails + clôture */
 function selectCandidats(eventId, retenusList) {
   var ss = SpreadsheetApp.openById(SS_ID);

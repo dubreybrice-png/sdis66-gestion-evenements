@@ -1528,6 +1528,20 @@
         }
         html += '  <div style="margin-top:10px;">' + getStatusTag(evt) + '</div>';
 
+        // Candidats list with remove buttons
+        if (evt.candidats.length > 0 && evt.statut !== 'cloturé') {
+          html += '  <div style="margin-top:10px; padding:10px 14px; background:#fff3e0; border-radius:10px; font-size:0.85rem;">';
+          html += '    <strong style="display:block;margin-bottom:6px;">📝 Candidats :</strong>';
+          evt.candidats.forEach(function(nom) {
+            var safeNom = nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.06);">';
+            html += '  <span>' + esc(nom) + '</span>';
+            html += '  <button onclick="confirmRemoveCandidat(\'' + evt.id + '\',\'' + safeNom + '\')" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:2px 8px;font-size:0.75rem;cursor:pointer;font-weight:600;transition:all .2s;" onmouseover="this.style.background=\'#ffebee\'" onmouseout="this.style.background=\'none\'">✕ Retirer</button>';
+            html += '</div>';
+          });
+          html += '  </div>';
+        }
+
         // Retenus display
         if (evt.retenus.length > 0) {
           html += '  <div style="margin-top:10px; padding:10px 14px; background:#e8f5e9; border-radius:10px; font-size:0.85rem;">';
@@ -1718,6 +1732,23 @@
         })
         .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
         .deleteEvent(eventId);
+    }
+
+    function confirmRemoveCandidat(eventId, agentNom) {
+      if (!confirm("Retirer \"" + agentNom + "\" de la liste des candidats ?")) return;
+
+      showToast("Retrait en cours...", "info");
+      google.script.run
+        .withSuccessHandler(function(r) {
+          if (r.success) {
+            var msg = "Candidat retiré.";
+            if (r.remaining === 0) msg += " Aucun candidat restant — les candidatures sont réouvertes.";
+            showToast(msg, "success");
+            loadEvents(renderAdminEvents);
+          } else { showToast(r.message || "Erreur lors du retrait.", "error"); }
+        })
+        .withFailureHandler(function(err) { showToast("Erreur : " + err.message, "error"); })
+        .removeCandidat(eventId, agentNom);
     }
 
     /* ===== SELECT CANDIDATES (with scoring) ===== */
