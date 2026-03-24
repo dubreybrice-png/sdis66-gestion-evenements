@@ -187,6 +187,7 @@
     }
     .btn-grp:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
     .btn-grp.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(21,101,192,0.3); }
+    .btn-grp.btn-type { padding: 5px 12px; font-size: 0.78rem; }
 
     .actions-bar {
       display: flex; gap: 12px; flex-wrap: wrap;
@@ -915,6 +916,15 @@
         </div>
         <div class="admin-toolbar-right" id="adminEventCount"></div>
       </div>
+      <div class="admin-toolbar" style="padding-top:0; margin-top:-6px;">
+        <div class="admin-toolbar-left">
+          <span style="font-size:0.82rem; color:#888; margin-right:4px;">Type :</span>
+          <button id="btnTypeSSO" class="btn-grp btn-type" onclick="setTypeFilter('SSO ICP')">🏃 SSO ICP</button>
+          <button id="btnTypeFMPA" class="btn-grp btn-type" onclick="setTypeFilter('FMPA SSUAP')">👨‍🏫 FMPA SSUAP</button>
+          <button id="btnTypeVLI" class="btn-grp btn-type" onclick="setTypeFilter('Garde VLI')">🚑 Garde VLI</button>
+          <button id="btnTypeAutres" class="btn-grp btn-type" onclick="setTypeFilter('Autres')">📦 Autres</button>
+        </div>
+      </div>
       <div id="adminEventsContainer">
         <div class="loading"><div class="spinner"></div></div>
       </div>
@@ -1120,6 +1130,7 @@
     var currentCandidateEventId = null;
     var currentSelectEventId = null;
     var adminGroupementFilter = null;
+    var adminTypeFilter = null;
     var scraperSessions = [];
 
     /* ===== LIEUX → GROUPEMENT MAPPING ===== */
@@ -1253,9 +1264,19 @@
     /* ===== HELPERS ===== */
     function getEventGroupement(lieu) {
       if (!lieu) return null;
-      // Si "Autre: blabla", pas de groupement
-      if (lieu.indexOf("Autre: ") === 0) return null;
-      return LIEU_GROUPEMENT[lieu] || null;
+      // Match direct
+      if (LIEU_GROUPEMENT[lieu]) return LIEU_GROUPEMENT[lieu];
+      // Si "Autre: blabla", tenter fuzzy match sur le texte après "Autre: "
+      var cleanLieu = lieu;
+      if (lieu.indexOf("Autre: ") === 0) {
+        cleanLieu = lieu.substring(7);
+      }
+      // Fuzzy match contre les lieux connus
+      var bestMatch = findBestLieu(cleanLieu);
+      if (bestMatch && LIEU_GROUPEMENT[bestMatch]) {
+        return LIEU_GROUPEMENT[bestMatch];
+      }
+      return null;
     }
 
     function displayLieu(lieu) {
@@ -1479,7 +1500,9 @@
     /* ===== ADMIN PANEL ===== */
     function openAdminPanel() {
       adminGroupementFilter = null;
+      adminTypeFilter = null;
       updateGroupementButtons();
+      updateTypeButtons();
       openModal('modalAdmin');
       renderAdminEvents();
     }
@@ -1507,33 +1530,64 @@
       });
     }
 
+    function setTypeFilter(type) {
+      if (adminTypeFilter === type) {
+        adminTypeFilter = null;
+      } else {
+        adminTypeFilter = type;
+      }
+      updateTypeButtons();
+      renderAdminEvents();
+    }
+
+    function updateTypeButtons() {
+      var typeMap = { 'SSO ICP': 'btnTypeSSO', 'FMPA SSUAP': 'btnTypeFMPA', 'Garde VLI': 'btnTypeVLI', 'Autres': 'btnTypeAutres' };
+      Object.keys(typeMap).forEach(function(t) {
+        var btn = document.getElementById(typeMap[t]);
+        if (btn) {
+          if (adminTypeFilter === t) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+    }
+
     function renderAdminEvents() {
       var container = document.getElementById('adminEventsContainer');
       var countEl = document.getElementById('adminEventCount');
 
-      // Filter events based on groupement
-      var filteredEvents;
+      // Filter events based on groupement AND type
+      var filteredEvents = allEvents;
       if (adminGroupementFilter) {
-        filteredEvents = allEvents.filter(function(evt) {
-          // Only show FMPA SSUAP of this groupement
-          if (evt.type !== "FMPA SSUAP") return false;
+        filteredEvents = filteredEvents.filter(function(evt) {
           var grp = getEventGroupement(evt.lieu);
           return grp === adminGroupementFilter;
         });
-      } else {
-        filteredEvents = allEvents;
+      }
+      if (adminTypeFilter) {
+        filteredEvents = filteredEvents.filter(function(evt) {
+          return evt.type === adminTypeFilter;
+        });
       }
 
       if (filteredEvents.length === 0) {
-        var msg = adminGroupementFilter
-          ? 'Aucun événement FMPA SSUAP pour le Groupement ' + adminGroupementFilter
+        var parts = [];
+        if (adminGroupementFilter) parts.push('Groupement ' + adminGroupementFilter);
+        if (adminTypeFilter) parts.push(adminTypeFilter);
+        var msg = parts.length > 0
+          ? 'Aucun événement pour ' + parts.join(' + ')
           : 'Aucun événement à venir';
         container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>' + msg + '</p></div>';
-        countEl.textContent = adminGroupementFilter ? 'Filtre : Groupement ' + adminGroupementFilter : '';
+        countEl.textContent = parts.length > 0 ? 'Filtre : ' + parts.join(' + ') : '';
         return;
       }
 
-      var filterLabel = adminGroupementFilter ? ' (Groupement ' + adminGroupementFilter + ' — FMPA SSUAP uniquement)' : '';
+      var filterParts = [];
+      if (adminGroupementFilter) filterParts.push('Groupement ' + adminGroupementFilter);
+      if (adminTypeFilter) filterParts.push(adminTypeFilter);
+      var filterLabel = filterParts.length > 0 ? ' (' + filterParts.join(' + ') + ')' : '';
       countEl.textContent = filteredEvents.length + ' événement(s)' + filterLabel;
 
       var html = '';
@@ -1940,38 +1994,21 @@
         var lines = block.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
 
         // ===== Detect ISP status =====
-        var isEnAttente = /en\s*attente/i.test(block);
-
-        if (!isEnAttente) {
-          // Check line after "medical_services" for an assigned ISP name
-          var hasISP = false;
-          for (var i = 0; i < lines.length; i++) {
-            if (lines[i].toLowerCase() === 'medical_services' && i + 1 < lines.length) {
-              var ispLine = lines[i + 1].trim();
-              if (ispLine && ispLine.length > 2 &&
-                  !/en\s*attente/i.test(ispLine) &&
-                  !/^(non|aucun|néant|sans|pas|\-|–|\/|\?)/i.test(ispLine)) {
-                hasISP = true;
-              }
+        var ispName = '';
+        var sansISP = /en\s*attente/i.test(block);
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase() === 'medical_services' && i + 1 < lines.length) {
+            var ispLine = lines[i + 1].trim();
+            if (ispLine && ispLine.length > 2 &&
+                !/en\s*attente/i.test(ispLine) &&
+                !/^(non|aucun|néant|sans|pas|\-|–|\/|\?)/i.test(ispLine) &&
+                !/^\d/.test(ispLine)) {
+              ispName = ispLine;
             }
+            break;
           }
-
-          // ALSO parse date from blocks WITH ISP so we carry it forward
-          for (var i = 0; i < lines.length; i++) {
-            var dm = lines[i].match(/(\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)(?:\s+(\d{4}))?/i);
-            if (dm) {
-              var day = dm[1].length === 1 ? '0' + dm[1] : dm[1];
-              var monthName = dm[2].toLowerCase().replace('é','e').replace('û','u');
-              var month = MOIS_FR[monthName] || MOIS_FR[dm[2].toLowerCase()] || '01';
-              var year = dm[3] || String(currentYear);
-              lastDateISO = year + '-' + month + '-' + day;
-              lastDateStr = day + '/' + month + '/' + year;
-              break;
-            }
-          }
-
-          if (hasISP) return; // Session has ISP → skip, but date was saved
         }
+        if (!ispName) sansISP = true;
 
         // ===== Parse date (French: "Vendredi 27 mars" or "27 mars 2026") =====
         var dateISO = '';
@@ -2045,6 +2082,8 @@
           heureFin: '',
           lieu: detectedLieu,
           cisOriginal: cisName,
+          ispName: ispName,
+          sansISP: sansISP,
           rawText: (dateStr + ' ' + heureDebut + ' — CIS ' + cisName).trim(),
           exists: false
         });
@@ -2163,9 +2202,9 @@
       }
 
       if (sessions.length === 0) {
-        showToast("Aucune session ICP sans ISP détectée.", "info");
+        showToast("Aucune session ICP détectée.", "info");
         document.getElementById('scraperResults').innerHTML =
-          '<div class="empty-state" style="padding:24px;"><div class="icon">🔍</div><p>Aucune session ICP sans ISP trouvée dans le texte collé.</p></div>';
+          '<div class="empty-state" style="padding:24px;"><div class="icon">🔍</div><p>Aucune session ICP trouvée dans le texte collé.</p></div>';
         return;
       }
 
@@ -2200,7 +2239,9 @@
 
       // Stats bar
       html += '<div class="scraper-stats">';
-      html += '  <span>🔍 <strong>' + total + '</strong> session(s) ICP sans ISP</span>';
+      var sansISPCount = scraperSessions.filter(function(s) { return s.sansISP && !s.exists; }).length;
+      html += '  <span>🔍 <strong>' + total + '</strong> session(s) ICP</span>';
+      if (sansISPCount > 0) html += '  <span>⚠️ <strong>' + sansISPCount + '</strong> sans ISP</span>';
       if (existsCount > 0) html += '  <span>✅ <strong>' + existsCount + '</strong> existe(nt) déjà</span>';
       html += '  <span>🆕 <strong>' + newCount + '</strong> nouvelle(s) à créer</span>';
       html += '</div>';
@@ -2246,8 +2287,10 @@
         html += '  </div>';
         if (s.exists) {
           html += '  <span class="scraper-tile-badge exists-badge">✅ Existe</span>';
-        } else {
+        } else if (s.sansISP) {
           html += '  <span class="scraper-tile-badge warning">⚠️ Sans ISP</span>';
+        } else {
+          html += '  <span class="scraper-tile-badge" style="background:#e8f5e9;color:#2e7d32;">👨‍⚕️ ' + esc(s.ispName) + '</span>';
         }
         html += '</div>';
       });
@@ -2307,13 +2350,17 @@
         if (!date) { valid = false; return; }
         if (!lieu) { valid = false; return; }
 
+        var comment = s.sansISP
+          ? 'ICP sans ISP — créé via scraper'
+          : 'ISP : ' + s.ispName + ' — créé via scraper';
+
         eventsToCreate.push({
           nom: s.nom,
           date: date,
           heureDebut: debut,
           heureFin: fin,
           lieu: lieu,
-          commentaire: 'ICP sans ISP — créé via scraper',
+          commentaire: comment,
           places: 1,
           type: 'SSO ICP'
         });
