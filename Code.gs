@@ -140,19 +140,15 @@ function createEvent(data) {
   var lastRow = sh.getLastRow();
   sh.getRange(lastRow, 3).setNumberFormat("dd/MM/yyyy");
 
-  // Notification aux abonnés
+  // Ajouter l'événement à la file d'attente pour le digest quotidien (1h du matin)
   try {
-    notifyNewEvent_({
-      id: id,
-      nom: data.nom,
-      date: formatDate_(dateObj),
-      heureDebut: data.heureDebut,
-      heureFin: data.heureFin,
-      lieu: data.lieu,
-      commentaire: data.commentaire || ""
-    });
+    var props = PropertiesService.getScriptProperties();
+    var pending = props.getProperty('PENDING_NEW_EVENTS');
+    var list = pending ? JSON.parse(pending) : [];
+    list.push(id);
+    props.setProperty('PENDING_NEW_EVENTS', JSON.stringify(list));
   } catch (e) {
-    Logger.log("Erreur notification nouveau evt: " + e);
+    Logger.log('Erreur ajout file digest: ' + e);
   }
 
   return { success: true, id: id };
@@ -359,60 +355,144 @@ function subscribeNotif(nom, matricule) {
   return { success: false, message: "Agent non trouvé dans le listing." };
 }
 
-/** Envoie un mail aux abonnés lors d'un nouvel événement */
-function notifyNewEvent_(evt) {
+/**
+ * Digest quotidien à 1h du matin : envoie UN seul mail récapitulatif
+ * aux abonnés s'il y a eu de nouveaux événements depuis le dernier envoi.
+ */
+function sendDailyNewEventsDigest() {
+  var props = PropertiesService.getScriptProperties();
+  var pending = props.getProperty('PENDING_NEW_EVENTS');
+  if (!pending) return;
+  var pendingIds = JSON.parse(pending);
+  if (!pendingIds || pendingIds.length === 0) return;
+
+  // Vider la file immédiatement pour éviter les doublons
+  props.deleteProperty('PENDING_NEW_EVENTS');
+
+  // Récupérer les détails des événements
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var sh = ss.getSheetByName(SHEET_EVENTS);
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  var data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+
+  var events = [];
+  for (var i = 0; i < data.length; i++) {
+    if (pendingIds.indexOf(String(data[i][0])) === -1) continue;
+    var dateEvt = new Date(data[i][2]);
+    events.push({
+      id: String(data[i][0]),
+      nom: String(data[i][1]),
+      date: formatDate_(dateEvt),
+      heureDebut: formatTime_(data[i][3]),
+      heureFin: formatTime_(data[i][4]),
+      lieu: String(data[i][5]),
+      commentaire: String(data[i][6] || ''),
+      type: String(data[i][11] || 'Autres')
+    });
+  }
+
+  if (events.length === 0) return;
+
   var agents = getAgentsList();
   var subscribers = agents.filter(function(a) { return a.notif && a.email; });
+  if (subscribers.length === 0) return;
 
-  // Build direct link to candidature
   var webAppUrl = ScriptApp.getService().getUrl();
-  var candidateLink = webAppUrl + (webAppUrl.indexOf('?') === -1 ? '?' : '&') + 'candidater=' + (evt.id || '');
+  var count = events.length;
+  var s = count > 1 ? 's' : '';
 
-  var lieuDisplay = formatLieu_(evt.lieu);
-  var heureFinPart = evt.heureFin ? ' - ' + evt.heureFin : '';
-  var commentPart = evt.commentaire ? '\n• Commentaire : ' + evt.commentaire : '';
-
+  // Construire le mail HTML
   var htmlBody = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">' +
     '<div style="background:#1565c0;color:white;padding:20px 24px;border-radius:12px 12px 0 0;">' +
-    '<h2 style="margin:0;font-size:1.2rem;">🚒 SDIS 66 — Nouvel événement</h2></div>' +
-    '<div style="padding:24px;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;">' +
-    '<h3 style="color:#1565c0;margin-top:0;">' + evt.nom + '</h3>' +
-    '<p style="line-height:1.8;color:#333;">'+
-    '📅 <strong>' + evt.date + '</strong><br>' +
-    '🕐 ' + evt.heureDebut + heureFinPart + '<br>' +
-    '📍 ' + lieuDisplay +
-    (evt.commentaire ? '<br>💬 <em>' + evt.commentaire + '</em>' : '') +
-    '</p>' +
-    '<div style="text-align:center;margin:28px 0 16px;">' +
-    '<a href="' + candidateLink + '" style="display:inline-block;background:#43a047;color:white;' +
-    'padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:1rem;' +
-    'box-shadow:0 3px 8px rgba(67,160,71,0.3);">📝 Cliquez ici pour candidater !</a></div>' +
-    '<p style="font-size:0.85rem;color:#888;text-align:center;">Ou rendez-vous sur l\'application : ' +
+    '<h2 style="margin:0;font-size:1.2rem;">🚒 SDIS 66 — ' + count + ' nouvel' + s + ' événement' + s + '</h2></div>' +
+    '<div style="padding:24px;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;">';
+
+  var textBody = 'Bonjour,\n\n' + count + ' nouvel' + s + ' événement' + s + ' ' + (count > 1 ? 'ont' : 'a') + ' été créé' + s + ' :\n\n';
+
+  for (var j = 0; j < events.length; j++) {
+    var evt = events[j];
+    var lieuDisplay = formatLieu_(evt.lieu);
+    var heureFinPart = evt.heureFin ? ' - ' + evt.heureFin : '';
+    var candidateLink = webAppUrl + (webAppUrl.indexOf('?') === -1 ? '?' : '&') + 'candidater=' + evt.id;
+
+    htmlBody += '<div style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:10px;border-left:4px solid #1565c0;">' +
+      '<h3 style="color:#1565c0;margin:0 0 8px;">' + evt.nom + '</h3>' +
+      '<p style="line-height:1.8;color:#333;margin:0;">' +
+      '📅 <strong>' + evt.date + '</strong><br>' +
+      '🕐 ' + evt.heureDebut + heureFinPart + '<br>' +
+      '📍 ' + lieuDisplay +
+      (evt.commentaire ? '<br>💬 <em>' + evt.commentaire + '</em>' : '') +
+      '</p>' +
+      '<div style="margin-top:12px;">' +
+      '<a href="' + candidateLink + '" style="display:inline-block;background:#43a047;color:white;' +
+      'padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:0.9rem;' +
+      'box-shadow:0 2px 6px rgba(67,160,71,0.3);">📝 Candidater</a></div></div>';
+
+    textBody += '─────────────────────────────────\n' +
+      '• ' + evt.nom + '\n' +
+      '• Date : ' + evt.date + '\n' +
+      '• Horaires : ' + evt.heureDebut + heureFinPart + '\n' +
+      '• Lieu : ' + lieuDisplay + '\n' +
+      (evt.commentaire ? '• Commentaire : ' + evt.commentaire + '\n' : '') +
+      '👉 Candidater : ' + candidateLink + '\n\n';
+  }
+
+  htmlBody += '<hr style="border:none;border-top:1px solid #eee;margin:20px 0;">' +
+    '<p style="font-size:0.85rem;color:#888;text-align:center;">Rendez-vous sur l\'application : ' +
     '<a href="' + webAppUrl + '">' + webAppUrl + '</a></p>' +
-    '<hr style="border:none;border-top:1px solid #eee;margin:20px 0;">' +
     '<p style="font-size:0.8rem;color:#aaa;">Cordialement,<br>SDIS 66 — Gestion Événements</p>' +
     '</div></div>';
 
-  var textBody = 'Bonjour,\n\nUn nouvel événement a été créé :\n\n' +
-    '• ' + evt.nom + '\n' +
-    '• Date : ' + evt.date + '\n' +
-    '• Horaires : ' + evt.heureDebut + heureFinPart + '\n' +
-    '• Lieu : ' + lieuDisplay + '\n' +
-    commentPart +
-    '\n👉 Cliquez ici pour candidater : ' + candidateLink +
-    '\n\nOu rendez-vous sur l\'application : ' + webAppUrl +
-    '\n\nCordialement,\nSDIS 66';
+  textBody += 'Ou rendez-vous sur l\'application : ' + webAppUrl + '\n\nCordialement,\nSDIS 66';
+
+  var subject = '🚒 SDIS 66 - ' + count + ' nouvel' + s + ' événement' + s + ' à pourvoir';
 
   subscribers.forEach(function(agent) {
     try {
       MailApp.sendEmail({
         to: agent.email,
-        subject: '🚒 SDIS 66 - Nouvel événement : ' + evt.nom,
+        subject: subject,
         body: textBody,
         htmlBody: htmlBody
       });
-    } catch (e) { Logger.log('Notif new event erreur (' + agent.nom + '): ' + e); }
+    } catch (e) { Logger.log('Digest erreur (' + agent.nom + '): ' + e); }
   });
+
+  Logger.log('Digest envoyé : ' + count + ' événement(s) à ' + subscribers.length + ' abonné(s)');
+}
+
+/**
+ * Installe les triggers automatiques :
+ * - Digest nouveaux événements : tous les jours à 1h
+ * - Alertes 24h/48h : tous les jours à 7h (existant)
+ * À exécuter UNE FOIS manuellement.
+ */
+function setupTriggers() {
+  // Supprimer les anciens triggers
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    var fn = existing[i].getHandlerFunction();
+    if (fn === 'sendDailyNewEventsDigest' || fn === 'notifyNewEvent_' || fn === 'checkAlertsAndSendEmails') {
+      ScriptApp.deleteTrigger(existing[i]);
+    }
+  }
+
+  // Digest quotidien à 1h du matin
+  ScriptApp.newTrigger('sendDailyNewEventsDigest')
+    .timeBased()
+    .everyDays(1)
+    .atHour(1)
+    .create();
+
+  // Alertes 24h/48h à 7h du matin
+  ScriptApp.newTrigger('checkAlertsAndSendEmails')
+    .timeBased()
+    .everyDays(1)
+    .atHour(7)
+    .create();
+
+  return 'Triggers installés : digest 1h + alertes 7h';
 }
 
 /* ========== SCORING ========== */
@@ -851,4 +931,31 @@ function formatTime_(val) {
     return String(val.getHours()).padStart(2, "0") + ":" + String(val.getMinutes()).padStart(2, "0");
   }
   return String(val || "");
+}
+
+/** DEBUG: list all upcoming events with lieu + type */
+function debugListEvents() {
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var sh = ss.getSheetByName(SHEET_EVENTS);
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return [];
+  var data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+  var today = new Date(); today.setHours(0,0,0,0);
+  var result = [];
+  for (var i = 0; i < data.length; i++) {
+    if (!data[i][0]) continue;
+    var dateEvt = new Date(data[i][2]); dateEvt.setHours(0,0,0,0);
+    if (dateEvt < today) continue;
+    result.push({
+      row: i+2,
+      id: String(data[i][0]),
+      nom: String(data[i][1]),
+      date: formatDate_(dateEvt),
+      lieu: String(data[i][5]),
+      type: String(data[i][11] || ""),
+      typeLen: String(data[i][11] || "").length,
+      typeCharCodes: String(data[i][11] || "").split('').map(function(c){ return c.charCodeAt(0); }).join(',')
+    });
+  }
+  return result;
 }
