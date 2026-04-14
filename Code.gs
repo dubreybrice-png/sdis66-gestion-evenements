@@ -478,11 +478,11 @@ function setupTriggers() {
     }
   }
 
-  // Digest quotidien à 1h du matin
+  // Digest quotidien à 19h
   ScriptApp.newTrigger('sendDailyNewEventsDigest')
     .timeBased()
     .everyDays(1)
-    .atHour(1)
+    .atHour(19)
     .create();
 
   // Alertes 24h/48h à 7h du matin
@@ -492,7 +492,7 @@ function setupTriggers() {
     .atHour(7)
     .create();
 
-  return 'Triggers installés : digest 1h + alertes 7h';
+  return 'Triggers installés : digest 19h + alertes 7h';
 }
 
 /* ========== SCORING ========== */
