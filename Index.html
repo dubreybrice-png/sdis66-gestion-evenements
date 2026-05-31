@@ -913,6 +913,7 @@
           <button id="btnGrpSud" class="btn-grp" onclick="setGroupementFilter('Sud')">📍 Groupement Sud</button>
           <button class="btn btn-warning" onclick="openScraper()" style="margin-left:8px;">📋 Scraper ICP</button>
           <button class="btn btn-outline" onclick="openScoresModal()" style="margin-left:8px;">🏆 Voir les scores</button>
+          <button class="btn" style="margin-left:8px;background:#7b1fa2;color:white;" onclick="sendNotificationManuel()">📧 Envoyer notification</button>
         </div>
         <div class="admin-toolbar-right" id="adminEventCount"></div>
       </div>
@@ -1475,6 +1476,16 @@
     }
 
     /* ===== ADMIN LOGIN ===== */
+    function sendNotificationManuel() {
+      if (!confirm('Envoyer un mail de notification des evenements sans inscrits a brice.dubrey@sdis66.fr ?')) return;
+      var pwd = prompt('Mot de passe :');
+      if (!pwd) return;
+      google.script.run
+        .withSuccessHandler(function(msg) { showToast(msg, 'success'); })
+        .withFailureHandler(function(err) { showToast('Erreur : ' + err.message, 'error'); })
+        .sendNotificationManuelle(pwd);
+    }
+
     function openAdminLogin() {
       document.getElementById('adminPassword').value = '';
       openModal('modalAdminLogin');
@@ -1928,6 +1939,18 @@
     }
 
     /* ===== FUZZY LIEU MATCHING ===== */
+    var CIS_ALIASES = {
+      'perpignan nord': 'PNord',
+      'pnord': 'PNord',
+      'p nord': 'PNord',
+      'perpignan sud': 'PSud',
+      'psud': 'PSud',
+      'p sud': 'PSud',
+      'perpignan ouest': 'POuest',
+      'pouest': 'POuest',
+      'p ouest': 'POuest'
+    };
+
     function normLieu(s) {
       return s
         .replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ïî]/g,'i')
@@ -1940,6 +1963,10 @@
     }
 
     function findBestLieu(cisName) {
+      if (!cisName) return '';
+      // Alias direct (Perpignan Nord → PNord, etc.)
+      var normInput = cisName.toLowerCase().replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ïî]/g,'i').replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/[ç]/g,'c').replace(/[\-']/g,' ').replace(/\s+/g,' ').trim();
+      if (CIS_ALIASES[normInput]) return CIS_ALIASES[normInput];
       var knownLieux = Object.keys(LIEU_GROUPEMENT);
       var normCIS = normLieu(cisName);
       var bestMatch = '';
